@@ -2,9 +2,9 @@ name: Docker Image CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
   pull_request:
-    branches: ["main"]
+    branches: ["master"]
 
 jobs:
   buld-and-push-service-image:
@@ -28,7 +28,7 @@ jobs:
           file: alpine.Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: falokut/${{ github.event.repository.name }}-alpine:latest , falokut/${{ github.event.repository.name }}-alpine:${{ steps.vars.outputs.tag }}
+          tags: falokut/${{ github.event.repository.name }}-alpine:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Publish scratch to Registry
@@ -37,5 +37,5 @@ jobs:
           file: scratch.Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: falokut/${{ github.event.repository.name }}-scratch:latest , falokut/${{ github.event.repository.name }}-scratch:${{ steps.vars.outputs.tag }}
+          tags: falokut/${{ github.event.repository.name }}-scratch:latest
           labels: ${{ steps.meta.outputs.labels }}
