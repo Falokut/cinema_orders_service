@@ -34,7 +34,7 @@ func CreateMetrics(name string) (Metrics, error) {
 	if err := prometheus.Register(metr.HitsTotal); err != nil {
 		return nil, err
 	}
-	
+
 	metr.Hits = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: name + "_hits",

@@ -230,12 +230,12 @@ func (s *cinemaOrdersService) ReservePlaces(ctx context.Context,
 	if err != nil {
 		return
 	}
-	//if screening.StartTime.Before(time.Now()) || screening.StartTime.Equal(time.Now()) {
-	//err = Error(InvalidArgument, "invalid screening_id, not possible to buy tickets for the screening that has already ended")
-	// 	return
-	// }
+	if screening.StartTime.Before(time.Now()) || screening.StartTime.Equal(time.Now()) {
+		err = models.Error(models.InvalidArgument, "invalid screening_id, not possible to buy tickets for the screening that has already ended")
+		return
+	}
 
-	// Checking place existance in screening places
+	// Checking place existence in screening places
 	for i := range toReserve {
 		isSeatExist := false
 		for j := range screening.Places {

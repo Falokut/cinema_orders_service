@@ -31,7 +31,7 @@ type Config struct {
 	} `yaml:"prometheus"`
 
 	DbConnectionString string        `yaml:"db_connection_string" env:"DB_CONNECTION_STRING"`
-	DbName       string        `yaml:"db_name" env:"DB_NAME"`
+	DbName             string        `yaml:"db_name" env:"DB_NAME"`
 	JaegerConfig       jaeger.Config `yaml:"jaeger"`
 	ReserveCache       struct {
 		Network  string `yaml:"network" env:"RESERVE_CACHE_NETWORK"`
