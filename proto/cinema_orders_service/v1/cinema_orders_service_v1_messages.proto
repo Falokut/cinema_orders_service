@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package cinema_orders_service;
+option go_package = "cinema_orders_service/v1/protos";
+
+message Timestamp {
+  // Time in format RFC3339, time must be in UTC
+  // example: 2023-11-10T23:00:00Z
+  string formattedTimestamp = 1 [ json_name = "formatted_timestamp" ];
+}
+
+// Status of the order item like ticket
+enum Status {
+  // Awaiting payment, the next status after payment is PAID
+  // or CANCELLED if the order was not paid within the specified period.
+  PAYMENT_REQUIRED = 0;
+
+  // The order is paid, after use, the status USED.
+  // AFTER the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved
+  // or remains PAID if the refund request is rejected.
+  PAID = 1;
+
+  // The order is awaiting a refund, after a successful refund, the order is awarded the REFUNDED status.
+  REFUND_AWAITING = 2;
+
+  // The order has been cancelled.
+  CANCELLED = 3;
+
+  // The order was fully completed, i.e. all the tickets was used and all the service was implemented.
+  // After the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved
+  // or remains USED if the refund request is rejected.
+  USED = 4;
+
+  // The funds for the order have been refunded.
+  REFUNDED = 5;
+}
+
+message Price {
+  // The price value in minimum currency units, for example 10010, is 100$ and 10 penny
+  int32 value = 1;
+}
+
+message Ticket {
+  string ticketId = 1[json_name="ticket_id"];
+  Status status = 2;
+  Price price = 3; 
+  Place place =4;
+}
+
+message Sort {
+  enum Ordering {
+    ASC = 0;
+    DESC = 1;
+  }
+  Ordering ordering = 1;
+  string fieldName = 2[json_name="field_name"];
+}
+
+message GetOrdersRequest {
+  uint32 page = 1;
+  uint32 limit = 2;
+  // See fields names in OrderPreview, only no nested field name,
+  // if not specified, sorting will be used with order DESC and sort_by_field=order_date
+  optional Sort sort = 3;
+}
+
+message OrderPreview {
+  string orderId = 1[json_name="order_id"];
+  Timestamp orderDate = 2[json_name="order_date"];
+  Price totalPrice = 3[json_name="total_price"];
+  int64 screeningId = 4[json_name="screening_id"];
+}
+
+message OrdersPreviews {
+  repeated OrderPreview orders = 1;
+}
+message GetOrderRequest {
+  string orderId = 1[json_name="order_id"];
+}
+
+message Order {
+  repeated Ticket tickets = 1;
+  Timestamp orderDate = 2[json_name="order_date"];
+  int64 screeningId=3[json_name="screening_id"];  
+ }
+
+
+message ReservePlacesRequest {
+  int64 screeningId = 1[json_name="screening_id"];
+  // The number of places must bigger than 0 and less than or equal to 5.
+  repeated Place places = 2;
+}
+
+message ReservePlacesResponse {
+  string reserveId = 1[json_name="reserve_id"];
+  // The payment time of the order is in minutes, after this time the reserve is canceled.
+  int32 timeToPay = 2[json_name="time_to_pay"];
+}
+
+message ProcessOrderRequest {
+  string reserveId = 1[json_name="reserve_id"];
+}
+
+message GetScreeningsOccupiedPlacesCountsRequest {
+  // for multiple values use ',' separator
+  string screeningsIds=1[json_name="screenings_ids"];
+}
+
+message ScreeningsOccupiedPlacesCount{
+  map<int64,uint32> screeningsOccupiedPlacesCount = 1[json_name="screenings_occupied_places_count"]; 
+}
+
+message ProcessOrderResponse {
+  string paymentUrl = 1[json_name="payment_url"];
+}
+
+message GetOccupiedPlacesRequest {
+  int64 screeningId= 1[json_name="screening_id"];
+}
+
+message CancelReservationRequest {
+  string reserveId = 1[json_name="reserve_id"];
+}
+
+message Place {
+  int32 row = 1;
+  int32 seat = 2;
+}
+
+message Places {
+  repeated Place places = 1;
+}
+
+message RefundOrderRequest {
+  string orderId = 1[json_name="order_id"];
+  // For a full refund, leave this field blank.
+  repeated string itemsIds = 2[json_name="items_ids"];
+}

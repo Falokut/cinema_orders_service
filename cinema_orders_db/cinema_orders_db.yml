@@ -1,0 +1,29 @@
+version: "3.8"
+
+networks:
+  cinema_orders_db_network:
+    driver: bridge
+
+services:
+  cinema_orders_database:
+    image: mongo:7-jammy
+    restart: unless-stopped
+    networks:
+      - cinema_orders_db_network
+    ports:
+      - 27017:27017
+    volumes:
+      - ./.container_data/:/data/db
+      - ./db/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: cinema_orders
+      SERVICE_NAME: cinema_orders_service
+      SERVICE_PASSWORD: ${SERVICE_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s

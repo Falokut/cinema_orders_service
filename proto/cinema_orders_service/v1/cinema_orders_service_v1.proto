@@ -1,0 +1,314 @@
+syntax = "proto3";
+
+package cinema_orders_service;
+import "cinema_orders_service_v1_messages.proto";
+option go_package = "cinema_orders_service/v1/protos";
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/protobuf/empty.proto";
+
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+    schemes: HTTP;
+    schemes: HTTPS;
+    consumes: "application/json";
+    produces: "application/json";
+
+    info: {
+        title:
+            "Cinema orders service";
+        version:
+            "1.0";
+        contact: {
+        name:
+            "Falokut";
+        url:
+            "https://github.com/Falokut";
+        email:
+            "timur.sinelnik@yandex.ru";
+        };
+    }
+    responses: {
+        key:"404";
+        value: {
+            description: "Returned when the resource does not exist.";
+            schema: {
+                json_schema: {
+                    ref: "#/definitions/googlerpcStatus";
+                }
+            }
+        }
+    }
+    responses: {
+        key: "500";
+        value: {
+            description: "Something went wrong.";
+            schema: {
+                json_schema: {
+                    ref: "#/definitions/googlerpcStatus";
+                }
+            }
+        }
+    }
+};
+
+
+service CinemaOrdersServiceV1 {
+    rpc GetOrders(GetOrdersRequest) returns(OrdersPreviews){
+        option (google.api.http) = {
+            get: "/v1/orders"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            responses: {
+                key: "401"
+                value: {
+                    description: "Returned when X-Account-Id header not specified.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            parameters: {
+                headers: {
+                    name: "X-Account-Id";
+                    description: "Unique identifier of the account";
+                    type: STRING;
+                    required: true; 
+                };
+            };
+        }; 
+    }
+
+    rpc GetOrder(GetOrderRequest) returns(Order) {
+        option (google.api.http) = {
+            get: "/v1/order/{orderId}"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            responses: {
+                key: "404"
+                value: {
+                    description: "Returned when order with specified id not found.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            responses: {
+                key: "401"
+                value: {
+                    description: "Returned when X-Account-Id header not specified.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            parameters: {
+                headers: {
+                    name: "X-Account-Id";
+                    description: "Unique identifier of the account";
+                    type: STRING;
+                    required: true; 
+                };
+            };
+        }; 
+    }
+
+    // Refund rules:
+    // greater than or equal to 10 days remaining before screening = 100%
+    // less than equal 5 days remaining before screening = 50%
+    // equal 3 days remaining before screening  = 30%
+    // if less than 3 days remaining before screening, the order is non-refundable
+    rpc RefundOrder(RefundOrderRequest) returns(google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/v1/order/{orderId}/refund"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            responses: {
+                key: "404"
+                value: {
+                    description: "Returned when order with specified id not found.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            responses: {
+                key: "404"
+                value: {
+                    description: "Returned when items_ids is specified and when any order item with specified id not found.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            responses: {
+                key: "400"
+                value: {
+                    description: "Returned when there are less than 3 days remaining before the screening.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            responses: {
+                key: "401"
+                value: {
+                    description: "Returned when X-Account-Id header not specified.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            parameters: {
+                headers: {
+                    name: "X-Account-Id";
+                    description: "Unique identifier of the account";
+                    type: STRING;
+                    required: true; 
+                };
+            };
+        };
+    }
+
+    rpc GetOccupiedPlaces(GetOccupiedPlacesRequest) returns(Places) {
+        option (google.api.http) = {
+            get: "/v1/screening/{screeningId}/occupied-places"
+        };
+    }
+    
+    rpc GetScreeningsOccupiedPlacesCounts(GetScreeningsOccupiedPlacesCountsRequest) returns(ScreeningsOccupiedPlacesCount) {
+        option (google.api.http) = {
+            get: "/v1/screenings/occupied-places/counts"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            responses: {
+                key: "400"
+                value: {
+                    description: "Returned when screenings_ids is empty or or contains characters that are not digits or commas.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+        };
+    }
+    
+    rpc ReservePlaces(ReservePlacesRequest) returns(ReservePlacesResponse) {
+        option (google.api.http) = {
+            post: "/v1/screening/{screeningId}/reserve"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            responses: {
+                key: "400"
+                value: {
+                    description: "Returned when the tickets amount > 5.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            responses: {
+                key: "400"
+                value: {
+                    description: "Returned when the screening with specified id not found.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            responses: {
+                key: "409"
+                value: {
+                    description: "Returned when any specified place already reserved or occupied.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+        };
+    }
+
+    rpc CancelReservation(CancelReservationRequest) returns(google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/v1/reservation/{reserveId}/cancel"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            responses: {
+                key: "404"
+                value: {
+                    description: "Returned when reservation with specified id not found.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+        };
+    }
+
+    rpc ProcessOrder(ProcessOrderRequest) returns(ProcessOrderResponse) {
+        option (google.api.http) = {
+            post: "/v1/reservation/{reserveId}/process"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            responses: {
+                key: "404"
+                value: {
+                    description: "Returned when reservation with specified id not found.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            responses: {
+                key: "404"
+                value: {
+                    description: "Returned when X-Account-Id header is specified and account with specified id not found.";
+                    schema: {
+                        json_schema: {
+                            ref: "#/definitions/googlerpcStatus";
+                        }
+                    }
+                }
+            };
+            parameters: {
+                headers: {
+                    name: "X-Account-Id";
+                    description: "Unique identifier of the account.";
+                    type: STRING;
+                    required: false; 
+                };
+            };
+        }; 
+    }
+}

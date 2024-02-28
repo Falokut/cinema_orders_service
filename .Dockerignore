@@ -1,0 +1,10 @@
+*.log
+*.env
+*.yaml
+*.yml
+*.json
+Makefile
+*.md
+*.txt
+*.proto
+**/movies_db/

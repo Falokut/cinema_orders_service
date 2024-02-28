@@ -1,0 +1,723 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Cinema orders service",
+    "version": "1.0",
+    "contact": {
+      "name": "Falokut",
+      "url": "https://github.com/Falokut",
+      "email": "timur.sinelnik@yandex.ru"
+    }
+  },
+  "tags": [
+    {
+      "name": "CinemaOrdersServiceV1"
+    }
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/order/{order_id}": {
+      "get": {
+        "operationId": "CinemaOrdersServiceV1_GetOrder",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cinema_orders_serviceOrder"
+            }
+          },
+          "401": {
+            "description": "Returned when X-Account-Id header not specified.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when order with specified id not found.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "500": {
+            "description": "Something went wrong.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-Account-Id",
+            "description": "Unique identifier of the account",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CinemaOrdersServiceV1"
+        ]
+      }
+    },
+    "/v1/order/{order_id}/refund": {
+      "post": {
+        "summary": "Refund rules:\ngreater than or equal to 10 days remaining before screening = 100%\nless than equal 5 days remaining before screening = 50%\nequal 3 days remaining before screening  = 30%\nif less than 3 days remaining before screening, the order is non-refundable",
+        "operationId": "CinemaOrdersServiceV1_RefundOrder",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "400": {
+            "description": "Returned when there are less than 3 days remaining before the screening.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "401": {
+            "description": "Returned when X-Account-Id header not specified.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when items_ids is specified and when any order item with specified id not found.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "500": {
+            "description": "Something went wrong.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "items_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "For a full refund, leave this field blank."
+                }
+              }
+            }
+          },
+          {
+            "name": "X-Account-Id",
+            "description": "Unique identifier of the account",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CinemaOrdersServiceV1"
+        ]
+      }
+    },
+    "/v1/orders": {
+      "get": {
+        "operationId": "CinemaOrdersServiceV1_GetOrders",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cinema_orders_serviceOrdersPreviews"
+            }
+          },
+          "401": {
+            "description": "Returned when X-Account-Id header not specified.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "500": {
+            "description": "Something went wrong.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sort.ordering",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "default": "ASC"
+          },
+          {
+            "name": "sort.field_name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "X-Account-Id",
+            "description": "Unique identifier of the account",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CinemaOrdersServiceV1"
+        ]
+      }
+    },
+    "/v1/reservation/{reserve_id}/cancel": {
+      "post": {
+        "operationId": "CinemaOrdersServiceV1_CancelReservation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "404": {
+            "description": "Returned when reservation with specified id not found.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "500": {
+            "description": "Something went wrong.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "reserve_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "tags": [
+          "CinemaOrdersServiceV1"
+        ]
+      }
+    },
+    "/v1/reservation/{reserve_id}/process": {
+      "post": {
+        "operationId": "CinemaOrdersServiceV1_ProcessOrder",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cinema_orders_serviceProcessOrderResponse"
+            }
+          },
+          "404": {
+            "description": "Returned when X-Account-Id header is specified and account with specified id not found.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "500": {
+            "description": "Something went wrong.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "reserve_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          },
+          {
+            "name": "X-Account-Id",
+            "description": "Unique identifier of the account.",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CinemaOrdersServiceV1"
+        ]
+      }
+    },
+    "/v1/screening/{screening_id}/occupied-places": {
+      "get": {
+        "operationId": "CinemaOrdersServiceV1_GetOccupiedPlaces",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cinema_orders_servicePlaces"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "500": {
+            "description": "Something went wrong.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "screening_id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "CinemaOrdersServiceV1"
+        ]
+      }
+    },
+    "/v1/screening/{screening_id}/reserve": {
+      "post": {
+        "operationId": "CinemaOrdersServiceV1_ReservePlaces",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cinema_orders_serviceReservePlacesResponse"
+            }
+          },
+          "400": {
+            "description": "Returned when the screening with specified id not found.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "409": {
+            "description": "Returned when any specified place already reserved or occupied.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "500": {
+            "description": "Something went wrong.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "screening_id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "places": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/cinema_orders_servicePlace"
+                  },
+                  "description": "The number of places must bigger than 0 and less than or equal to 5."
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "CinemaOrdersServiceV1"
+        ]
+      }
+    },
+    "/v1/screenings/occupied-places/counts": {
+      "get": {
+        "operationId": "CinemaOrdersServiceV1_GetScreeningsOccupiedPlacesCounts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cinema_orders_serviceScreeningsOccupiedPlacesCount"
+            }
+          },
+          "400": {
+            "description": "Returned when screenings_ids is empty or or contains characters that are not digits or commas.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "500": {
+            "description": "Something went wrong.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "screenings_ids",
+            "description": "for multiple values use ',' separator",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CinemaOrdersServiceV1"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "SortOrdering": {
+      "type": "string",
+      "enum": [
+        "ASC",
+        "DESC"
+      ],
+      "default": "ASC"
+    },
+    "cinema_orders_serviceOrder": {
+      "type": "object",
+      "properties": {
+        "tickets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/cinema_orders_serviceTicket"
+          }
+        },
+        "order_date": {
+          "$ref": "#/definitions/cinema_orders_serviceTimestamp"
+        },
+        "screening_id": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "cinema_orders_serviceOrderPreview": {
+      "type": "object",
+      "properties": {
+        "order_id": {
+          "type": "string"
+        },
+        "order_date": {
+          "$ref": "#/definitions/cinema_orders_serviceTimestamp"
+        },
+        "total_price": {
+          "$ref": "#/definitions/cinema_orders_servicePrice"
+        },
+        "screening_id": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "cinema_orders_serviceOrdersPreviews": {
+      "type": "object",
+      "properties": {
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/cinema_orders_serviceOrderPreview"
+          }
+        }
+      }
+    },
+    "cinema_orders_servicePlace": {
+      "type": "object",
+      "properties": {
+        "row": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "seat": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "cinema_orders_servicePlaces": {
+      "type": "object",
+      "properties": {
+        "places": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/cinema_orders_servicePlace"
+          }
+        }
+      }
+    },
+    "cinema_orders_servicePrice": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "integer",
+          "format": "int32",
+          "title": "The price value in minimum currency units, for example 10010, is 100$ and 10 penny"
+        }
+      }
+    },
+    "cinema_orders_serviceProcessOrderResponse": {
+      "type": "object",
+      "properties": {
+        "payment_url": {
+          "type": "string"
+        }
+      }
+    },
+    "cinema_orders_serviceReservePlacesResponse": {
+      "type": "object",
+      "properties": {
+        "reserve_id": {
+          "type": "string"
+        },
+        "time_to_pay": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The payment time of the order is in minutes, after this time the reserve is canceled."
+        }
+      }
+    },
+    "cinema_orders_serviceScreeningsOccupiedPlacesCount": {
+      "type": "object",
+      "properties": {
+        "screenings_occupied_places_count": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "cinema_orders_serviceSort": {
+      "type": "object",
+      "properties": {
+        "ordering": {
+          "$ref": "#/definitions/SortOrdering"
+        },
+        "field_name": {
+          "type": "string"
+        }
+      }
+    },
+    "cinema_orders_serviceStatus": {
+      "type": "string",
+      "enum": [
+        "PAYMENT_REQUIRED",
+        "PAID",
+        "REFUND_AWAITING",
+        "CANCELLED",
+        "USED",
+        "REFUNDED"
+      ],
+      "default": "PAYMENT_REQUIRED",
+      "description": "- PAYMENT_REQUIRED: Awaiting payment, the next status after payment is PAID\nor CANCELLED if the order was not paid within the specified period.\n - PAID: The order is paid, after use, the status USED.\nAFTER the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved\nor remains PAID if the refund request is rejected.\n - REFUND_AWAITING: The order is awaiting a refund, after a successful refund, the order is awarded the REFUNDED status.\n - CANCELLED: The order has been cancelled.\n - USED: The order was fully completed, i.e. all the tickets was used and all the service was implemented.\nAfter the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved\nor remains USED if the refund request is rejected.\n - REFUNDED: The funds for the order have been refunded.",
+      "title": "Status of the order item like ticket"
+    },
+    "cinema_orders_serviceTicket": {
+      "type": "object",
+      "properties": {
+        "ticket_id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/cinema_orders_serviceStatus"
+        },
+        "price": {
+          "$ref": "#/definitions/cinema_orders_servicePrice"
+        },
+        "place": {
+          "$ref": "#/definitions/cinema_orders_servicePlace"
+        }
+      }
+    },
+    "cinema_orders_serviceTimestamp": {
+      "type": "object",
+      "properties": {
+        "formatted_timestamp": {
+          "type": "string",
+          "title": "Time in format RFC3339, time must be in UTC\nexample: 2023-11-10T23:00:00Z"
+        }
+      }
+    },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    }
+  }
+}
