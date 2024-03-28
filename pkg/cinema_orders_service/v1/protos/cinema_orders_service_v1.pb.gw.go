@@ -78,14 +78,14 @@ func request_CinemaOrdersServiceV1_GetOrder_0(ctx context.Context, marshaler run
 		_   = err
 	)
 
-	val, ok = pathParams["orderId"]
+	val, ok = pathParams["orderID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "orderId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "orderID")
 	}
 
-	protoReq.OrderId, err = runtime.String(val)
+	protoReq.OrderID, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "orderId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "orderID", err)
 	}
 
 	msg, err := client.GetOrder(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -104,14 +104,14 @@ func local_request_CinemaOrdersServiceV1_GetOrder_0(ctx context.Context, marshal
 		_   = err
 	)
 
-	val, ok = pathParams["orderId"]
+	val, ok = pathParams["orderID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "orderId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "orderID")
 	}
 
-	protoReq.OrderId, err = runtime.String(val)
+	protoReq.OrderID, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "orderId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "orderID", err)
 	}
 
 	msg, err := server.GetOrder(ctx, &protoReq)
@@ -138,14 +138,14 @@ func request_CinemaOrdersServiceV1_RefundOrder_0(ctx context.Context, marshaler 
 		_   = err
 	)
 
-	val, ok = pathParams["orderId"]
+	val, ok = pathParams["orderID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "orderId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "orderID")
 	}
 
-	protoReq.OrderId, err = runtime.String(val)
+	protoReq.OrderID, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "orderId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "orderID", err)
 	}
 
 	msg, err := client.RefundOrder(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -172,14 +172,14 @@ func local_request_CinemaOrdersServiceV1_RefundOrder_0(ctx context.Context, mars
 		_   = err
 	)
 
-	val, ok = pathParams["orderId"]
+	val, ok = pathParams["orderID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "orderId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "orderID")
 	}
 
-	protoReq.OrderId, err = runtime.String(val)
+	protoReq.OrderID, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "orderId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "orderID", err)
 	}
 
 	msg, err := server.RefundOrder(ctx, &protoReq)
@@ -198,14 +198,14 @@ func request_CinemaOrdersServiceV1_GetOccupiedPlaces_0(ctx context.Context, mars
 		_   = err
 	)
 
-	val, ok = pathParams["screeningId"]
+	val, ok = pathParams["screeningID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "screeningId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "screeningID")
 	}
 
-	protoReq.ScreeningId, err = runtime.Int64(val)
+	protoReq.ScreeningID, err = runtime.Int64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "screeningId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "screeningID", err)
 	}
 
 	msg, err := client.GetOccupiedPlaces(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -224,14 +224,14 @@ func local_request_CinemaOrdersServiceV1_GetOccupiedPlaces_0(ctx context.Context
 		_   = err
 	)
 
-	val, ok = pathParams["screeningId"]
+	val, ok = pathParams["screeningID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "screeningId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "screeningID")
 	}
 
-	protoReq.ScreeningId, err = runtime.Int64(val)
+	protoReq.ScreeningID, err = runtime.Int64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "screeningId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "screeningID", err)
 	}
 
 	msg, err := server.GetOccupiedPlaces(ctx, &protoReq)
@@ -294,14 +294,14 @@ func request_CinemaOrdersServiceV1_ReservePlaces_0(ctx context.Context, marshale
 		_   = err
 	)
 
-	val, ok = pathParams["screeningId"]
+	val, ok = pathParams["screeningID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "screeningId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "screeningID")
 	}
 
-	protoReq.ScreeningId, err = runtime.Int64(val)
+	protoReq.ScreeningID, err = runtime.Int64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "screeningId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "screeningID", err)
 	}
 
 	msg, err := client.ReservePlaces(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -328,14 +328,14 @@ func local_request_CinemaOrdersServiceV1_ReservePlaces_0(ctx context.Context, ma
 		_   = err
 	)
 
-	val, ok = pathParams["screeningId"]
+	val, ok = pathParams["screeningID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "screeningId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "screeningID")
 	}
 
-	protoReq.ScreeningId, err = runtime.Int64(val)
+	protoReq.ScreeningID, err = runtime.Int64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "screeningId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "screeningID", err)
 	}
 
 	msg, err := server.ReservePlaces(ctx, &protoReq)
@@ -362,14 +362,14 @@ func request_CinemaOrdersServiceV1_CancelReservation_0(ctx context.Context, mars
 		_   = err
 	)
 
-	val, ok = pathParams["reserveId"]
+	val, ok = pathParams["reserveID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "reserveId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "reserveID")
 	}
 
-	protoReq.ReserveId, err = runtime.String(val)
+	protoReq.ReserveID, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "reserveId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "reserveID", err)
 	}
 
 	msg, err := client.CancelReservation(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -396,14 +396,14 @@ func local_request_CinemaOrdersServiceV1_CancelReservation_0(ctx context.Context
 		_   = err
 	)
 
-	val, ok = pathParams["reserveId"]
+	val, ok = pathParams["reserveID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "reserveId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "reserveID")
 	}
 
-	protoReq.ReserveId, err = runtime.String(val)
+	protoReq.ReserveID, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "reserveId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "reserveID", err)
 	}
 
 	msg, err := server.CancelReservation(ctx, &protoReq)
@@ -430,14 +430,14 @@ func request_CinemaOrdersServiceV1_ProcessOrder_0(ctx context.Context, marshaler
 		_   = err
 	)
 
-	val, ok = pathParams["reserveId"]
+	val, ok = pathParams["reserveID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "reserveId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "reserveID")
 	}
 
-	protoReq.ReserveId, err = runtime.String(val)
+	protoReq.ReserveID, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "reserveId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "reserveID", err)
 	}
 
 	msg, err := client.ProcessOrder(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -464,14 +464,14 @@ func local_request_CinemaOrdersServiceV1_ProcessOrder_0(ctx context.Context, mar
 		_   = err
 	)
 
-	val, ok = pathParams["reserveId"]
+	val, ok = pathParams["reserveID"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "reserveId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "reserveID")
 	}
 
-	protoReq.ReserveId, err = runtime.String(val)
+	protoReq.ReserveID, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "reserveId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "reserveID", err)
 	}
 
 	msg, err := server.ProcessOrder(ctx, &protoReq)
@@ -518,7 +518,7 @@ func RegisterCinemaOrdersServiceV1HandlerServer(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/GetOrder", runtime.WithHTTPPathPattern("/v1/order/{orderId}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/GetOrder", runtime.WithHTTPPathPattern("/v1/order/{orderID}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -543,7 +543,7 @@ func RegisterCinemaOrdersServiceV1HandlerServer(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/RefundOrder", runtime.WithHTTPPathPattern("/v1/order/{orderId}/refund"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/RefundOrder", runtime.WithHTTPPathPattern("/v1/order/{orderID}/refund"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -568,7 +568,7 @@ func RegisterCinemaOrdersServiceV1HandlerServer(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/GetOccupiedPlaces", runtime.WithHTTPPathPattern("/v1/screening/{screeningId}/occupied-places"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/GetOccupiedPlaces", runtime.WithHTTPPathPattern("/v1/screening/{screeningID}/occupied-places"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -618,7 +618,7 @@ func RegisterCinemaOrdersServiceV1HandlerServer(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/ReservePlaces", runtime.WithHTTPPathPattern("/v1/screening/{screeningId}/reserve"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/ReservePlaces", runtime.WithHTTPPathPattern("/v1/screening/{screeningID}/reserve"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -643,7 +643,7 @@ func RegisterCinemaOrdersServiceV1HandlerServer(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/CancelReservation", runtime.WithHTTPPathPattern("/v1/reservation/{reserveId}/cancel"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/CancelReservation", runtime.WithHTTPPathPattern("/v1/reservation/{reserveID}/cancel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -668,7 +668,7 @@ func RegisterCinemaOrdersServiceV1HandlerServer(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/ProcessOrder", runtime.WithHTTPPathPattern("/v1/reservation/{reserveId}/process"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/ProcessOrder", runtime.WithHTTPPathPattern("/v1/reservation/{reserveID}/process"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -754,7 +754,7 @@ func RegisterCinemaOrdersServiceV1HandlerClient(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/GetOrder", runtime.WithHTTPPathPattern("/v1/order/{orderId}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/GetOrder", runtime.WithHTTPPathPattern("/v1/order/{orderID}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -776,7 +776,7 @@ func RegisterCinemaOrdersServiceV1HandlerClient(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/RefundOrder", runtime.WithHTTPPathPattern("/v1/order/{orderId}/refund"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/RefundOrder", runtime.WithHTTPPathPattern("/v1/order/{orderID}/refund"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -798,7 +798,7 @@ func RegisterCinemaOrdersServiceV1HandlerClient(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/GetOccupiedPlaces", runtime.WithHTTPPathPattern("/v1/screening/{screeningId}/occupied-places"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/GetOccupiedPlaces", runtime.WithHTTPPathPattern("/v1/screening/{screeningID}/occupied-places"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -842,7 +842,7 @@ func RegisterCinemaOrdersServiceV1HandlerClient(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/ReservePlaces", runtime.WithHTTPPathPattern("/v1/screening/{screeningId}/reserve"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/ReservePlaces", runtime.WithHTTPPathPattern("/v1/screening/{screeningID}/reserve"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -864,7 +864,7 @@ func RegisterCinemaOrdersServiceV1HandlerClient(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/CancelReservation", runtime.WithHTTPPathPattern("/v1/reservation/{reserveId}/cancel"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/CancelReservation", runtime.WithHTTPPathPattern("/v1/reservation/{reserveID}/cancel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -886,7 +886,7 @@ func RegisterCinemaOrdersServiceV1HandlerClient(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/ProcessOrder", runtime.WithHTTPPathPattern("/v1/reservation/{reserveId}/process"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cinema_orders_service.CinemaOrdersServiceV1/ProcessOrder", runtime.WithHTTPPathPattern("/v1/reservation/{reserveID}/process"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -908,19 +908,19 @@ func RegisterCinemaOrdersServiceV1HandlerClient(ctx context.Context, mux *runtim
 var (
 	pattern_CinemaOrdersServiceV1_GetOrders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "orders"}, ""))
 
-	pattern_CinemaOrdersServiceV1_GetOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "order", "orderId"}, ""))
+	pattern_CinemaOrdersServiceV1_GetOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "order", "orderID"}, ""))
 
-	pattern_CinemaOrdersServiceV1_RefundOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "order", "orderId", "refund"}, ""))
+	pattern_CinemaOrdersServiceV1_RefundOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "order", "orderID", "refund"}, ""))
 
-	pattern_CinemaOrdersServiceV1_GetOccupiedPlaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "screening", "screeningId", "occupied-places"}, ""))
+	pattern_CinemaOrdersServiceV1_GetOccupiedPlaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "screening", "screeningID", "occupied-places"}, ""))
 
 	pattern_CinemaOrdersServiceV1_GetScreeningsOccupiedPlacesCounts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v1", "screenings", "occupied-places", "counts"}, ""))
 
-	pattern_CinemaOrdersServiceV1_ReservePlaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "screening", "screeningId", "reserve"}, ""))
+	pattern_CinemaOrdersServiceV1_ReservePlaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "screening", "screeningID", "reserve"}, ""))
 
-	pattern_CinemaOrdersServiceV1_CancelReservation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "reservation", "reserveId", "cancel"}, ""))
+	pattern_CinemaOrdersServiceV1_CancelReservation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "reservation", "reserveID", "cancel"}, ""))
 
-	pattern_CinemaOrdersServiceV1_ProcessOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "reservation", "reserveId", "process"}, ""))
+	pattern_CinemaOrdersServiceV1_ProcessOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "reservation", "reserveID", "process"}, ""))
 )
 
 var (

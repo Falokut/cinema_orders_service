@@ -84,7 +84,7 @@ service CinemaOrdersServiceV1 {
 
     rpc GetOrder(GetOrderRequest) returns(Order) {
         option (google.api.http) = {
-            get: "/v1/order/{orderId}"
+            get: "/v1/order/{orderID}"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             responses: {
@@ -127,7 +127,7 @@ service CinemaOrdersServiceV1 {
     // if less than 3 days remaining before screening, the order is non-refundable
     rpc RefundOrder(RefundOrderRequest) returns(google.protobuf.Empty) {
         option (google.api.http) = {
-            post: "/v1/order/{orderId}/refund"
+            post: "/v1/order/{orderID}/refund"
             body: "*"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -188,7 +188,7 @@ service CinemaOrdersServiceV1 {
 
     rpc GetOccupiedPlaces(GetOccupiedPlacesRequest) returns(Places) {
         option (google.api.http) = {
-            get: "/v1/screening/{screeningId}/occupied-places"
+            get: "/v1/screening/{screeningID}/occupied-places"
         };
     }
     
@@ -213,7 +213,7 @@ service CinemaOrdersServiceV1 {
     
     rpc ReservePlaces(ReservePlacesRequest) returns(ReservePlacesResponse) {
         option (google.api.http) = {
-            post: "/v1/screening/{screeningId}/reserve"
+            post: "/v1/screening/{screeningID}/reserve"
             body: "*"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -255,7 +255,7 @@ service CinemaOrdersServiceV1 {
 
     rpc CancelReservation(CancelReservationRequest) returns(google.protobuf.Empty) {
         option (google.api.http) = {
-            post: "/v1/reservation/{reserveId}/cancel"
+            post: "/v1/reservation/{reserveID}/cancel"
             body: "*"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -275,7 +275,7 @@ service CinemaOrdersServiceV1 {
 
     rpc ProcessOrder(ProcessOrderRequest) returns(ProcessOrderResponse) {
         option (google.api.http) = {
-            post: "/v1/reservation/{reserveId}/process"
+            post: "/v1/reservation/{reserveID}/process"
             body: "*"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

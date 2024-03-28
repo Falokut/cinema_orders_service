@@ -47,19 +47,21 @@ func NewCinemaService(addr string,
 	}, nil
 }
 
-func (s *CinemaService) Shutdown() error {
+func (s *CinemaService) Shutdown() {
 	if s.conn == nil {
-		return nil
+		return
 	}
 
-	return s.conn.Close()
+	if err := s.conn.Close(); err != nil {
+		s.logger.Error("cinema service error while closing connection", err.Error())
+	}
 }
 
-func (s *CinemaService) GetScreeningTicketPrice(ctx context.Context, screeningId int64) (price uint32, err error) {
+func (s *CinemaService) GetScreeningTicketPrice(ctx context.Context, screeningID int64) (price uint32, err error) {
 	defer s.handleError(ctx, &err, "GetScreeningTicketPrice")
 
 	res, err := s.client.GetScreening(ctx, &cinema_service.GetScreeningRequest{
-		ScreeningId: screeningId,
+		ScreeningID: screeningID,
 		Mask:        &fieldmaskpb.FieldMask{Paths: []string{"ticket_price"}},
 	})
 
@@ -70,13 +72,13 @@ func (s *CinemaService) GetScreeningTicketPrice(ctx context.Context, screeningId
 	return uint32(res.TicketPrice.Value), nil
 }
 
-func (s *CinemaService) GetScreening(ctx context.Context, screeningId int64) (screening service.Screening, err error) {
+func (s *CinemaService) GetScreening(ctx context.Context, screeningID int64) (screening service.Screening, err error) {
 	defer s.handleError(ctx, &err, "GetScreening")
 
 	mask := &fieldmaskpb.FieldMask{}
 	mask.Paths = []string{"hall_configuration", "start_time"}
 	res, err := s.client.GetScreening(ctx, &cinema_service.GetScreeningRequest{
-		ScreeningId: screeningId,
+		ScreeningID: screeningID,
 		Mask:        mask})
 
 	if err != nil {
@@ -98,11 +100,11 @@ func (s *CinemaService) GetScreening(ctx context.Context, screeningId int64) (sc
 	}, nil
 }
 
-func (s *CinemaService) GetScreeningStartTime(ctx context.Context, screeningId int64) (startTime time.Time, err error) {
+func (s *CinemaService) GetScreeningStartTime(ctx context.Context, screeningID int64) (startTime time.Time, err error) {
 	defer s.handleError(ctx, &err, "GetScreeningStartTime")
 
 	res, err := s.client.GetScreening(ctx, &cinema_service.GetScreeningRequest{
-		ScreeningId: screeningId,
+		ScreeningID: screeningID,
 		Mask:        &fieldmaskpb.FieldMask{Paths: []string{"start_time"}},
 	})
 	if err != nil {
@@ -135,7 +137,6 @@ func (s *CinemaService) logError(err error, functionName string) {
 			},
 		).Error("cinema service error occurred")
 	}
-
 }
 
 func (s *CinemaService) handleError(ctx context.Context, err *error, functionName string) {

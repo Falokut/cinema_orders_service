@@ -657,12 +657,12 @@
         "PAYMENT_REQUIRED",
         "PAID",
         "REFUND_AWAITING",
-        "CANCELLED",
+        "CANCELED",
         "USED",
         "REFUNDED"
       ],
       "default": "PAYMENT_REQUIRED",
-      "description": "- PAYMENT_REQUIRED: Awaiting payment, the next status after payment is PAID\nor CANCELLED if the order was not paid within the specified period.\n - PAID: The order is paid, after use, the status USED.\nAFTER the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved\nor remains PAID if the refund request is rejected.\n - REFUND_AWAITING: The order is awaiting a refund, after a successful refund, the order is awarded the REFUNDED status.\n - CANCELLED: The order has been cancelled.\n - USED: The order was fully completed, i.e. all the tickets was used and all the service was implemented.\nAfter the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved\nor remains USED if the refund request is rejected.\n - REFUNDED: The funds for the order have been refunded.",
+      "description": "- PAYMENT_REQUIRED: Awaiting payment, the next status after payment is PAID\nor CANCELED if the order was not paid within the specified period.\n - PAID: The order is paid, after use, the status USED.\nAFTER the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved\nor remains PAID if the refund request is rejected.\n - REFUND_AWAITING: The order is awaiting a refund, after a successful refund, the order is awarded the REFUNDED status.\n - CANCELED: The order has been canceled.\n - USED: The order was fully completed, i.e. all the tickets was used and all the service was implemented.\nAfter the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved\nor remains USED if the refund request is rejected.\n - REFUNDED: The funds for the order have been refunded.",
       "title": "Status of the order item like ticket"
     },
     "cinema_orders_serviceTicket": {

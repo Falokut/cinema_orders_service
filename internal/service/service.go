@@ -2,15 +2,12 @@ package service
 
 import (
 	"context"
-	"errors"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/Falokut/cinema_orders_service/internal/events"
 	"github.com/Falokut/cinema_orders_service/internal/models"
 	"github.com/Falokut/cinema_orders_service/internal/repository"
-	cinema_orders_service "github.com/Falokut/cinema_orders_service/pkg/cinema_orders_service/v1/protos"
 	"github.com/Falokut/cinema_orders_service/pkg/sliceutils"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -19,31 +16,31 @@ import (
 )
 
 type CinemaOrdersService interface {
-	GetOccupiedPlaces(ctx context.Context, screeningId int64) ([]models.Place, error)
-	ReservePlaces(ctx context.Context, screeningId int64, places []models.Place) (string, time.Duration, error)
-	ProcessOrder(ctx context.Context, reservationId, accountId string) (string, error)
-	CancelReservation(ctx context.Context, reservationId string) error
+	GetOccupiedPlaces(ctx context.Context, screeningID int64) ([]models.Place, error)
+	ReservePlaces(ctx context.Context, screeningID int64, places []models.Place) (string, time.Duration, error)
+	ProcessOrder(ctx context.Context, reservationID, accountID string) (string, error)
+	CancelReservation(ctx context.Context, reservationID string) error
 	GetScreeningsOccupiedPlacesCounts(ctx context.Context, ids []int64) (map[int64]uint32, error)
-	GetOrders(ctx context.Context, accountId string,
+	GetOrders(ctx context.Context, accountID string,
 		page, limit uint32, sort models.SortDTO) ([]models.OrderPreview, error)
-	GetOrder(ctx context.Context, orderId, accountId string) (models.Order, error)
-	RefundOrder(ctx context.Context, accountId, ordererId string) error
-	RefundOrderItems(ctx context.Context, accountId, ordererId string, itemsIds []string) error
+	GetOrder(ctx context.Context, orderID, accountID string) (models.Order, error)
+	RefundOrder(ctx context.Context, accountID, ordererID string) error
+	RefundOrderItems(ctx context.Context, accountID, ordererID string, itemsIDs []string) error
 }
 
 type PaymentService interface {
-	PreparePaymentUrl(ctx context.Context, email string, amount uint32, orderId string) (string, error)
-	RequestOrderRefund(ctx context.Context, percent uint32, orderId string) error
-	RequestOrderItemsRefund(ctx context.Context, percent uint32, orderId string, itemsIds []string) error
+	PreparePaymentURL(ctx context.Context, email string, amount uint32, orderID string) (string, error)
+	RequestOrderRefund(ctx context.Context, percent uint32, orderID string) error
+	RequestOrderItemsRefund(ctx context.Context, percent uint32, orderID string, itemsIDs []string) error
 }
 
 type ProfilesService interface {
 	GetEmail(ctx context.Context) (string, error)
 }
 type CinemaService interface {
-	GetScreeningTicketPrice(ctx context.Context, screeningId int64) (uint32, error)
-	GetScreening(ctx context.Context, screeningId int64) (Screening, error)
-	GetScreeningStartTime(ctx context.Context, screeningId int64) (time.Time, error)
+	GetScreeningTicketPrice(ctx context.Context, screeningID int64) (uint32, error)
+	GetScreening(ctx context.Context, screeningID int64) (Screening, error)
+	GetScreeningStartTime(ctx context.Context, screeningID int64) (time.Time, error)
 }
 
 type cinemaOrdersService struct {
@@ -84,7 +81,7 @@ func NewCinemaOrdersService(logger *logrus.Logger,
 }
 
 func (s *cinemaOrdersService) GetOccupiedPlaces(ctx context.Context,
-	screeningId int64) (places []models.Place, err error) {
+	screeningID int64) (places []models.Place, err error) {
 	type chanResp struct {
 		seats []models.Place
 		err   error
@@ -96,20 +93,20 @@ func (s *cinemaOrdersService) GetOccupiedPlaces(ctx context.Context,
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		places, err := s.repo.GetOccupiedPlaces(ctx, screeningId)
+		oplaces, oerr := s.repo.GetOccupiedPlaces(ctx, screeningID)
 		resCh <- chanResp{
-			seats: places,
-			err:   err,
+			seats: oplaces,
+			err:   oerr,
 		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		places, err := s.cache.GetReservedPlacesForScreening(ctx, screeningId)
+		rplaces, rerr := s.cache.GetReservedPlacesForScreening(ctx, screeningID)
 		resCh <- chanResp{
-			seats: places,
-			err:   err,
+			seats: rplaces,
+			err:   rerr,
 		}
 	}()
 
@@ -154,20 +151,20 @@ func (s *cinemaOrdersService) GetScreeningsOccupiedPlacesCounts(ctx context.Cont
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		seats, err := s.repo.GetScreeningsOccupiedPlaces(ctx, ids)
+		seats, perr := s.repo.GetScreeningsOccupiedPlaces(ctx, ids)
 		resCh <- chanResp{
 			seats: seats,
-			err:   err,
+			err:   perr,
 		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		seats, err := s.cache.GetScreeningsReservedPlaces(ctx, ids)
+		seats, perr := s.cache.GetScreeningsReservedPlaces(ctx, ids)
 		resCh <- chanResp{
 			seats: seats,
-			err:   err,
+			err:   perr,
 		}
 	}()
 
@@ -205,16 +202,16 @@ LOOP:
 		}
 	}
 	placesCounts = make(map[int64]uint32, len(places))
-	for screeningId, places := range places {
-		placesCounts[screeningId] = uint32(len(places))
+	for screeningID, places := range places {
+		placesCounts[screeningID] = uint32(len(places))
 	}
 
 	return placesCounts, nil
 }
 
 func (s *cinemaOrdersService) ReservePlaces(ctx context.Context,
-	screeningId int64, toReserve []models.Place) (reserveId string, paymentTime time.Duration, err error) {
-	occupied, err := s.GetOccupiedPlaces(ctx, screeningId)
+	screeningID int64, toReserve []models.Place) (reserveID string, paymentTime time.Duration, err error) {
+	occupied, err := s.GetOccupiedPlaces(ctx, screeningID)
 	if err != nil {
 		return
 	}
@@ -226,7 +223,7 @@ func (s *cinemaOrdersService) ReservePlaces(ctx context.Context,
 		}
 	}
 
-	screening, err := s.getScreening(ctx, screeningId)
+	screening, err := s.getScreening(ctx, screeningID)
 	if err != nil {
 		return
 	}
@@ -251,7 +248,7 @@ func (s *cinemaOrdersService) ReservePlaces(ctx context.Context,
 		}
 	}
 
-	id, err := s.cache.ReservePlaces(ctx, screeningId, toReserve, s.seatReservationTime)
+	id, err := s.cache.ReservePlaces(ctx, screeningID, toReserve, s.seatReservationTime)
 	if err != nil {
 		return
 	}
@@ -259,8 +256,8 @@ func (s *cinemaOrdersService) ReservePlaces(ctx context.Context,
 	return id, s.seatReservationTime, nil
 }
 
-func (s *cinemaOrdersService) getScreening(ctx context.Context, screeningId int64) (screening Screening, err error) {
-	screening, err = s.cinemaService.GetScreening(ctx, screeningId)
+func (s *cinemaOrdersService) getScreening(ctx context.Context, screeningID int64) (screening Screening, err error) {
+	screening, err = s.cinemaService.GetScreening(ctx, screeningID)
 	if err != nil {
 		return
 	}
@@ -268,19 +265,18 @@ func (s *cinemaOrdersService) getScreening(ctx context.Context, screeningId int6
 	return
 }
 
-func (s *cinemaOrdersService) GetOrder(ctx context.Context, orderId, accountId string) (order models.Order, err error) {
-	return s.repo.GetOrder(ctx, orderId, accountId)
+func (s *cinemaOrdersService) GetOrder(ctx context.Context, orderID, accountID string) (order models.Order, err error) {
+	return s.repo.GetOrder(ctx, orderID, accountID)
 }
 
 func (s *cinemaOrdersService) ProcessOrder(ctx context.Context,
-	reservationId, accountId string) (orderId string, err error) {
-
+	reservationID, accountID string) (orderID string, err error) {
 	email, err := s.profilesService.GetEmail(ctx)
 	if err != nil {
 		return
 	}
 
-	reservedPlaces, screeningId, err := s.cache.GetReservation(ctx, reservationId)
+	reservedPlaces, screeningID, err := s.cache.GetReservation(ctx, reservationID)
 	if err != nil {
 		return
 	}
@@ -289,12 +285,12 @@ func (s *cinemaOrdersService) ProcessOrder(ctx context.Context,
 		return
 	}
 
-	price, err := s.cinemaService.GetScreeningTicketPrice(ctx, screeningId)
+	price, err := s.cinemaService.GetScreeningTicketPrice(ctx, screeningID)
 	if err != nil {
 		return
 	}
 
-	orderId = uuid.NewString()
+	orderID = uuid.NewString()
 	var convertedPlaces = make([]models.ProcessOrderPlace, len(reservedPlaces))
 	for i := range reservedPlaces {
 		convertedPlaces[i] = models.ProcessOrderPlace{
@@ -304,36 +300,37 @@ func (s *cinemaOrdersService) ProcessOrder(ctx context.Context,
 	}
 
 	err = s.repo.ProcessOrder(ctx, models.ProcessOrderDTO{
-		Id:          orderId,
+		ID:          orderID,
 		Places:      convertedPlaces,
-		ScreeningId: screeningId,
-		OwnerId:     accountId,
+		ScreeningID: screeningID,
+		OwnerID:     accountID,
 	})
 	if err != nil {
 		return
 	}
 
-	url, err := s.paymentService.PreparePaymentUrl(ctx, email, price*uint32(len(reservedPlaces)), orderId)
+	url, err := s.paymentService.PreparePaymentURL(ctx, email, price*uint32(len(reservedPlaces)), orderID)
 	if err != nil {
 		return
 	}
 
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		const deleteReservationTimeout = time.Second * 30
+		ctx, cancel := context.WithTimeout(context.Background(), deleteReservationTimeout)
 		defer cancel()
-		err = s.cache.DeletePlacesReservation(ctx, reservationId)
+		err = s.cache.DeletePlacesReservation(ctx, reservationID)
 		if err != nil {
 			s.logger.Errorf("error while deleting reservation %v", err)
 		}
 	}()
 
-	go s.sendOrderCreatedNotification(context.Background(), accountId, email, orderId)
+	go s.sendOrderCreatedNotification(context.Background(), accountID, email, orderID)
 
 	return url, nil
 }
 
-func (s *cinemaOrdersService) sendOrderCreatedNotification(ctx context.Context, accountId, email, orderId string) {
-	order, err := s.GetOrder(ctx, orderId, accountId)
+func (s *cinemaOrdersService) sendOrderCreatedNotification(ctx context.Context, accountID, email, orderID string) {
+	order, err := s.GetOrder(ctx, orderID, accountID)
 	if err != nil {
 		s.logger.Error("error while getting order err=", err)
 		return
@@ -345,7 +342,7 @@ func (s *cinemaOrdersService) sendOrderCreatedNotification(ctx context.Context, 
 	}
 
 	s.logger.Errorf("error while sending order in mq err=%v trying cancel order", err)
-	statuses, err := s.repo.GetOrderItemsStatuses(ctx, orderId)
+	statuses, err := s.repo.GetOrderItemsStatuses(ctx, orderID)
 	if err != nil {
 		s.logger.Error("error while getting order items err=", err)
 		return
@@ -356,39 +353,47 @@ func (s *cinemaOrdersService) sendOrderCreatedNotification(ctx context.Context, 
 		return
 	}
 
-	//It is expected that when paying, all the statuses of the items in 1 transaction will change
-	if statuses[0] == models.ORDER_ITEM_STATUS_PAID {
-		err = s.paymentService.RequestOrderRefund(ctx, 100, orderId)
+	// Expecting that when paying, all the statuses of the items in 1 transaction will change
+	if statuses[0] == models.OrderItemStatusPaid {
+		err = s.paymentService.RequestOrderRefund(ctx, uint32(Full), orderID)
 		if err != nil {
 			s.logger.Error("error while requesting order items refund err=", err)
 		}
-	} else if statuses[0] == models.ORDER_ITEM_STATUS_PAYMENT_REQUIRED {
-		err = s.repo.CancelOrder(ctx, orderId)
+	} else if statuses[0] == models.OrderItemStatusPaymentRequired {
+		err = s.repo.CancelOrder(ctx, orderID)
 		if err != nil {
 			s.logger.Error("error while requesting order items cancelation err=", err)
 		}
 	}
 }
 
-func (s *cinemaOrdersService) CancelReservation(ctx context.Context, reservationId string) error {
-	return s.cache.DeletePlacesReservation(ctx, reservationId)
+func (s *cinemaOrdersService) CancelReservation(ctx context.Context, reservationID string) error {
+	return s.cache.DeletePlacesReservation(ctx, reservationID)
 }
 
-func (s *cinemaOrdersService) GetOrders(ctx context.Context, accountId string, page, limit uint32,
+func (s *cinemaOrdersService) GetOrders(ctx context.Context, accountID string, page, limit uint32,
 	sort models.SortDTO) ([]models.OrderPreview, error) {
-	return s.repo.GetOrders(ctx, accountId, page, limit, sort)
+	return s.repo.GetOrders(ctx, accountID, page, limit, sort)
 }
 
-func (s *cinemaOrdersService) getOrderScreeningId(ctx context.Context, accountId, orderId string) (int64, error) {
-	return s.repo.GetOrderScreeningId(ctx, accountId, orderId)
+func (s *cinemaOrdersService) getOrderScreeningID(ctx context.Context, accountID, orderID string) (int64, error) {
+	return s.repo.GetOrderScreeningID(ctx, accountID, orderID)
 }
 
 const (
 	day = time.Hour * 24
 )
 
-func (s *cinemaOrdersService) getRefundPercent(ctx context.Context, accountId, orderId string) (percent uint32, err error) {
-	id, err := s.getOrderScreeningId(ctx, accountId, orderId)
+type RefundPercent uint32
+
+const (
+	Full     RefundPercent = 100
+	Half     RefundPercent = 50
+	OneThird RefundPercent = 30
+)
+
+func (s *cinemaOrdersService) getRefundPercent(ctx context.Context, accountID, orderID string) (percent uint32, err error) {
+	id, err := s.getOrderScreeningID(ctx, accountID, orderID)
 	if err != nil {
 		return
 	}
@@ -406,49 +411,30 @@ func (s *cinemaOrdersService) getRefundPercent(ctx context.Context, accountId, o
 
 	switch {
 	case timeBeforeScreening >= 10*day:
-		return 100, nil
+		return uint32(Full), nil
 	case timeBeforeScreening <= 5*day && timeBeforeScreening > 3*day:
-		return 50, nil
+		return uint32(Half), nil
 	default:
-		return 30, nil
+		return uint32(OneThird), nil
 	}
 }
 
-func (s *cinemaOrdersService) RefundOrder(ctx context.Context, accountId, orderId string) (err error) {
-	percent, err := s.getRefundPercent(ctx, accountId, orderId)
+func (s *cinemaOrdersService) RefundOrder(ctx context.Context, accountID, orderID string) (err error) {
+	percent, err := s.getRefundPercent(ctx, accountID, orderID)
 	if err != nil {
 		return
 	}
 
-	err = s.paymentService.RequestOrderRefund(ctx, percent, orderId)
+	err = s.paymentService.RequestOrderRefund(ctx, percent, orderID)
 	return
 }
 
 func (s *cinemaOrdersService) RefundOrderItems(ctx context.Context,
-	accountId, orderId string, itemsIds []string) (err error) {
-	percent, err := s.getRefundPercent(ctx, accountId, orderId)
+	accountID, orderID string, itemsIDs []string) (err error) {
+	percent, err := s.getRefundPercent(ctx, accountID, orderID)
 	if err != nil {
 		return
 	}
 
-	return s.paymentService.RequestOrderItemsRefund(ctx, percent, orderId, itemsIds)
-}
-
-func OrderStatusFromString(str string) (cinema_orders_service.Status, error) {
-	switch {
-	default:
-		return cinema_orders_service.Status(-1), errors.New("unknown status")
-	case strings.EqualFold(str, cinema_orders_service.Status_PAYMENT_REQUIRED.String()):
-		return cinema_orders_service.Status_PAYMENT_REQUIRED, nil
-	case strings.EqualFold(str, cinema_orders_service.Status_PAID.String()):
-		return cinema_orders_service.Status_PAID, nil
-	case strings.EqualFold(str, cinema_orders_service.Status_CANCELLED.String()):
-		return cinema_orders_service.Status_CANCELLED, nil
-	case strings.EqualFold(str, cinema_orders_service.Status_REFUNDED.String()):
-		return cinema_orders_service.Status_REFUNDED, nil
-	case strings.EqualFold(str, cinema_orders_service.Status_REFUND_AWAITING.String()):
-		return cinema_orders_service.Status_REFUND_AWAITING, nil
-	case strings.EqualFold(str, cinema_orders_service.Status_USED.String()):
-		return cinema_orders_service.Status_USED, nil
-	}
+	return s.paymentService.RequestOrderItemsRefund(ctx, percent, orderID, itemsIDs)
 }

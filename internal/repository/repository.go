@@ -17,20 +17,20 @@ type DBConfig struct {
 }
 
 type CinemaOrdersRepository interface {
-	GetOccupiedPlaces(ctx context.Context, screeningId int64) ([]models.Place, error)
+	GetOccupiedPlaces(ctx context.Context, screeningID int64) ([]models.Place, error)
 	ProcessOrder(ctx context.Context, order models.ProcessOrderDTO) error
 	GetScreeningsOccupiedPlaces(ctx context.Context, ids []int64) (map[int64][]models.Place, error)
-	GetOrders(ctx context.Context, accountId string, page, limit uint32, sort models.SortDTO) ([]models.OrderPreview, error)
-	GetOrder(ctx context.Context, orderId, accountId string) (models.Order, error)
-	GetOrderScreeningId(ctx context.Context, accountId, orderId string) (int64, error)
-	GetOrderItemsStatuses(ctx context.Context, orderId string) ([]models.OrderItemStatus, error)
-	CancelOrder(ctx context.Context, orderId string) error
+	GetOrders(ctx context.Context, accountID string, page, limit uint32, sort models.SortDTO) ([]models.OrderPreview, error)
+	GetOrder(ctx context.Context, orderID, accountID string) (models.Order, error)
+	GetOrderScreeningID(ctx context.Context, accountID, orderID string) (int64, error)
+	GetOrderItemsStatuses(ctx context.Context, orderID string) ([]models.OrderItemStatus, error)
+	CancelOrder(ctx context.Context, orderID string) error
 }
 
 type ReserveCache interface {
-	ReservePlaces(ctx context.Context, screeningId int64, seats []models.Place, ttl time.Duration) (string, error)
-	GetReservation(ctx context.Context, reservationId string) (seats []models.Place, screeningId int64, err error)
-	DeletePlacesReservation(ctx context.Context, reservationId string) error
-	GetReservedPlacesForScreening(ctx context.Context, screeningId int64) ([]models.Place, error)
+	ReservePlaces(ctx context.Context, screeningID int64, seats []models.Place, ttl time.Duration) (string, error)
+	GetReservation(ctx context.Context, reservationID string) (seats []models.Place, screeningID int64, err error)
+	DeletePlacesReservation(ctx context.Context, reservationID string) error
+	GetReservedPlacesForScreening(ctx context.Context, screeningID int64) ([]models.Place, error)
 	GetScreeningsReservedPlaces(ctx context.Context, ids []int64) (map[int64][]models.Place, error)
 }

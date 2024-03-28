@@ -45,12 +45,14 @@ func NewProfilesService(addr string, cfg config.ConnectionSecureConfig, logger *
 	}, nil
 }
 
-func (s *ProfilesService) Shutdown() error {
+func (s *ProfilesService) Shutdown() {
 	if s.conn == nil {
-		return nil
+		return
 	}
 
-	return s.conn.Close()
+	if err := s.conn.Close(); err != nil {
+		s.logger.Error("profiles service error while closing connection", err.Error())
+	}
 }
 
 // in metadata must be header X-Account-Id
@@ -121,9 +123,8 @@ func (s *ProfilesService) handleError(ctx context.Context, err *error, functionN
 	case codes.Internal:
 		*err = models.Error(models.Internal, "profiles service internal error")
 	case codes.NotFound:
-		*err = models.Error(models.NotFound, "account not found")
+		*err = models.Error(models.NotFound, "profile not found")
 	default:
 		*err = models.Error(models.Unknown, e.Error())
 	}
-
 }

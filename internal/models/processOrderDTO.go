@@ -7,7 +7,7 @@ type ProcessOrderPlace struct {
 
 type ProcessOrderDTO struct {
 	Places      []ProcessOrderPlace
-	Id          string
-	OwnerId     string
-	ScreeningId int64
+	ID          string
+	OwnerID     string
+	ScreeningID int64
 }

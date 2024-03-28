@@ -12,7 +12,7 @@ message Timestamp {
 // Status of the order item like ticket
 enum Status {
   // Awaiting payment, the next status after payment is PAID
-  // or CANCELLED if the order was not paid within the specified period.
+  // or CANCELED if the order was not paid within the specified period.
   PAYMENT_REQUIRED = 0;
 
   // The order is paid, after use, the status USED.
@@ -23,8 +23,8 @@ enum Status {
   // The order is awaiting a refund, after a successful refund, the order is awarded the REFUNDED status.
   REFUND_AWAITING = 2;
 
-  // The order has been cancelled.
-  CANCELLED = 3;
+  // The order has been canceled.
+  CANCELED = 3;
 
   // The order was fully completed, i.e. all the tickets was used and all the service was implemented.
   // After the buyer has requested a refund, the status switches to REFUND_AWAITING if the refund is approved
@@ -41,7 +41,7 @@ message Price {
 }
 
 message Ticket {
-  string ticketId = 1[json_name="ticket_id"];
+  string ticketID = 1[json_name="ticket_id"];
   Status status = 2;
   Price price = 3; 
   Place place =4;
@@ -65,45 +65,45 @@ message GetOrdersRequest {
 }
 
 message OrderPreview {
-  string orderId = 1[json_name="order_id"];
+  string orderID = 1[json_name="order_id"];
   Timestamp orderDate = 2[json_name="order_date"];
   Price totalPrice = 3[json_name="total_price"];
-  int64 screeningId = 4[json_name="screening_id"];
+  int64 screeningID = 4[json_name="screening_id"];
 }
 
 message OrdersPreviews {
   repeated OrderPreview orders = 1;
 }
 message GetOrderRequest {
-  string orderId = 1[json_name="order_id"];
+  string orderID = 1[json_name="order_id"];
 }
 
 message Order {
   repeated Ticket tickets = 1;
   Timestamp orderDate = 2[json_name="order_date"];
-  int64 screeningId=3[json_name="screening_id"];  
+  int64 screeningID=3[json_name="screening_id"];  
  }
 
 
 message ReservePlacesRequest {
-  int64 screeningId = 1[json_name="screening_id"];
+  int64 screeningID = 1[json_name="screening_id"];
   // The number of places must bigger than 0 and less than or equal to 5.
   repeated Place places = 2;
 }
 
 message ReservePlacesResponse {
-  string reserveId = 1[json_name="reserve_id"];
+  string reserveID = 1[json_name="reserve_id"];
   // The payment time of the order is in minutes, after this time the reserve is canceled.
   int32 timeToPay = 2[json_name="time_to_pay"];
 }
 
 message ProcessOrderRequest {
-  string reserveId = 1[json_name="reserve_id"];
+  string reserveID = 1[json_name="reserve_id"];
 }
 
 message GetScreeningsOccupiedPlacesCountsRequest {
   // for multiple values use ',' separator
-  string screeningsIds=1[json_name="screenings_ids"];
+  string screeningsIDs=1[json_name="screenings_ids"];
 }
 
 message ScreeningsOccupiedPlacesCount{
@@ -115,11 +115,11 @@ message ProcessOrderResponse {
 }
 
 message GetOccupiedPlacesRequest {
-  int64 screeningId= 1[json_name="screening_id"];
+  int64 screeningID= 1[json_name="screening_id"];
 }
 
 message CancelReservationRequest {
-  string reserveId = 1[json_name="reserve_id"];
+  string reserveID = 1[json_name="reserve_id"];
 }
 
 message Place {
@@ -132,7 +132,7 @@ message Places {
 }
 
 message RefundOrderRequest {
-  string orderId = 1[json_name="order_id"];
+  string orderID = 1[json_name="order_id"];
   // For a full refund, leave this field blank.
-  repeated string itemsIds = 2[json_name="items_ids"];
+  repeated string itemsIDs = 2[json_name="items_ids"];
 }

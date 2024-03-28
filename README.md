@@ -1,4 +1,10 @@
+# Cinema service
 [![Go Report Card](https://goreportcard.com/badge/github.com/Falokut/cinema_orders_service)](https://goreportcard.com/report/github.com/Falokut/cinema_orders_service)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/Falokut/cinema_orders_service)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/Falokut/cinema_orders_service)
+[![Go](https://github.com/Falokut/cinema_orders_service/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/Falokut/cinema_orders_service/actions/workflows/go.yml) ![](https://changkun.de/urlstat?mode=github&repo=Falokut/cinema_orders_service)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+---
 
 # Content
 
@@ -60,8 +66,8 @@ if supported values is empty, then any type values are supported
 |refund_sleep_time|payment_service||time.Duration with positive duration|the time after which the order status changes TO REFUNDED|[supported values](#timeduration-yaml-supported-values)|
 |addr|profiles_service|PROFILES_SERVICE_ADDR|string|address of the profiles service|all valid addresses formatted like host:port or ip-address:port|
 |secure_config|profiles_service||nested yml configuration  [secure config](#secure-connection-config)|||
-|addr|cinema_service|CINEMA_SERVICE_ADDR|string|address of the profiles service|all valid addresses formatted like host:port or ip-address:port|
-|secure_config|cinema_service||nested yml configuration  [secure config](#secure-connection-config)|||
+|addr|cinema_orders_service|CINEMA_SERVICE_ADDR|string|address of the profiles service|all valid addresses formatted like host:port or ip-address:port|
+|secure_config|cinema_orders_service||nested yml configuration  [secure config](#secure-connection-config)|||
 
 
 ### time.Duration yaml supported values

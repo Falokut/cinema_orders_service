@@ -9,11 +9,11 @@ import (
 )
 
 type OrdersRepository interface {
-	ChangeOrderStatus(ctx context.Context, orderId string, newStatus models.OrderItemStatus) error
-	ChangeOrderItemsStatus(ctx context.Context, orderId string,
+	ChangeOrderStatus(ctx context.Context, orderID string, newStatus models.OrderItemStatus) error
+	ChangeOrderItemsStatus(ctx context.Context, orderID string,
 		itemsIds []string, newStatus models.OrderItemStatus) error
-	GetOrderTotalPrice(ctx context.Context, orderId string) (uint32, error)
-	GetOrderItemsTotalPrice(ctx context.Context, orderId string, itemsIds []string) (uint32, error)
+	GetOrderTotalPrice(ctx context.Context, orderID string) (uint32, error)
+	GetOrderItemsTotalPrice(ctx context.Context, orderID string, itemsIds []string) (uint32, error)
 }
 
 type PaymentServiceStub struct {
@@ -24,14 +24,14 @@ type PaymentServiceStub struct {
 	logger           *logrus.Logger
 }
 
-func NewPaymentServiceStub(paymentStubUrl string,
+func NewPaymentServiceStub(paymentStubURL string,
 	paymentSleepTime time.Duration,
 	refundSleepTime time.Duration,
 	repo OrdersRepository,
 	logger *logrus.Logger,
 ) *PaymentServiceStub {
 	return &PaymentServiceStub{
-		paymenturl:       paymentStubUrl,
+		paymenturl:       paymentStubURL,
 		paymentSleepTime: paymentSleepTime,
 		refundSleepTime:  refundSleepTime,
 		repo:             repo,
@@ -39,44 +39,52 @@ func NewPaymentServiceStub(paymentStubUrl string,
 	}
 }
 
-func (s *PaymentServiceStub) ChangeOrderStatus(ctx context.Context, orderId string, newStatus models.OrderItemStatus) (err error) {
+const errorSleepDuration = time.Millisecond * 200
+
+func (s *PaymentServiceStub) ChangeOrderStatus(ctx context.Context, orderID string, newStatus models.OrderItemStatus) (err error) {
 	retry := 0
 	for retry <= 2 {
-		err = s.repo.ChangeOrderStatus(ctx, orderId, newStatus)
+		err = s.repo.ChangeOrderStatus(ctx, orderID, newStatus)
 		if err == nil {
 			return nil
 		}
 		s.logger.Errorf("error while changing order status %v", err)
 		retry++
-		time.Sleep(time.Millisecond * 200)
+		time.Sleep(errorSleepDuration)
 	}
 
 	return
 }
 
-func (s *PaymentServiceStub) ChangeOrderItemsStatus(ctx context.Context, orderId string,
+func (s *PaymentServiceStub) ChangeOrderItemsStatus(ctx context.Context, orderID string,
 	itemsIds []string, newStatus models.OrderItemStatus) (err error) {
 	retry := 0
 	for retry <= 2 {
-		err = s.repo.ChangeOrderItemsStatus(ctx, orderId, itemsIds, newStatus)
+		err = s.repo.ChangeOrderItemsStatus(ctx, orderID, itemsIds, newStatus)
 
 		if err == nil {
 			return nil
 		}
 		s.logger.Errorf("error while changing order items status %v", err)
 		retry++
-		time.Sleep(time.Millisecond * 200)
+		time.Sleep(errorSleepDuration)
 	}
 
 	return
 }
 
-func (s *PaymentServiceStub) PreparePaymentUrl(ctx context.Context, email string, total uint32, orderId string) (paymenturl string, err error) {
+func (s *PaymentServiceStub) PreparePaymentURL(_ context.Context,
+	_ string,
+	total uint32,
+	orderID string) (paymenturl string, err error) {
 	go func() {
 		time.Sleep(s.paymentSleepTime)
-		err := s.ChangeOrderStatus(context.Background(), orderId, models.ORDER_ITEM_STATUS_PAID)
+		err := s.ChangeOrderStatus(context.Background(), orderID, models.OrderItemStatusPaid)
 		if err != nil {
-			s.orderRefundRequest(context.Background(), float64(total), orderId)
+			err := s.orderRefundRequest(context.Background(), float64(total), orderID)
+			if err != nil {
+				s.logger.Error(err)
+			}
 		}
 	}()
 
@@ -84,51 +92,59 @@ func (s *PaymentServiceStub) PreparePaymentUrl(ctx context.Context, email string
 	return
 }
 
-func (s *PaymentServiceStub) RequestOrderRefund(ctx context.Context, percent uint32, orderId string) (err error) {
-	total, err := s.repo.GetOrderTotalPrice(ctx, orderId)
+func (s *PaymentServiceStub) RequestOrderRefund(ctx context.Context, percent uint32, orderID string) (err error) {
+	total, err := s.repo.GetOrderTotalPrice(ctx, orderID)
 	if err != nil {
 		return
 	}
 
 	go func() {
-		s.orderRefundRequest(ctx, float64(total)*float64(percent)/100.0, orderId)
+		err := s.orderRefundRequest(context.Background(), float64(total)*float64(percent)/percentBase, orderID)
+		if err != nil {
+			s.logger.Error(err)
+		}
 	}()
 	return
 }
 
+const percentBase = 100.0
+
 func (s *PaymentServiceStub) RequestOrderItemsRefund(ctx context.Context,
-	percent uint32, orderId string, itemsIds []string) (err error) {
-	total, err := s.repo.GetOrderItemsTotalPrice(ctx, orderId, itemsIds)
+	percent uint32, orderID string, itemsIds []string) (err error) {
+	total, err := s.repo.GetOrderItemsTotalPrice(ctx, orderID, itemsIds)
 	if err != nil {
 		return
 	}
 
 	go func() {
-		s.orderItemsRefundRequest(ctx, float64(total)*float64(percent)/100.0, orderId, itemsIds)
+		err := s.orderItemsRefundRequest(context.Background(), float64(total)*float64(percent)/percentBase, orderID, itemsIds)
+		if err != nil {
+			s.logger.Error(err)
+		}
 	}()
 	return
 }
 
 func (s *PaymentServiceStub) orderItemsRefundRequest(ctx context.Context,
-	total float64, orderId string, itemsIds []string) (err error) {
-	err = s.ChangeOrderItemsStatus(context.Background(), orderId, itemsIds, models.ORDER_ITEM_STATUS_REFUND_AWAITING)
+	_ float64, orderID string, itemsIds []string) (err error) {
+	err = s.ChangeOrderItemsStatus(ctx, orderID, itemsIds, models.OrderItemStatusRefundAwaiting)
 	if err != nil {
 		return
 	}
 
 	time.Sleep(s.refundSleepTime)
-	err = s.ChangeOrderItemsStatus(context.Background(), orderId, itemsIds, models.ORDER_ITEM_STATUS_REFUNDED)
+	err = s.ChangeOrderItemsStatus(ctx, orderID, itemsIds, models.OrderItemStatusRefunded)
 
 	return
 }
 
-func (s *PaymentServiceStub) orderRefundRequest(ctx context.Context, total float64, orderId string) (err error) {
-	err = s.ChangeOrderStatus(context.Background(), orderId, models.ORDER_ITEM_STATUS_REFUND_AWAITING)
+func (s *PaymentServiceStub) orderRefundRequest(ctx context.Context, _ float64, orderID string) (err error) {
+	err = s.ChangeOrderStatus(ctx, orderID, models.OrderItemStatusRefundAwaiting)
 	if err != nil {
 		return
 	}
 
 	time.Sleep(s.refundSleepTime)
-	err = s.ChangeOrderStatus(context.Background(), orderId, models.ORDER_ITEM_STATUS_REFUNDED)
+	err = s.ChangeOrderStatus(ctx, orderID, models.OrderItemStatusRefunded)
 	return
 }

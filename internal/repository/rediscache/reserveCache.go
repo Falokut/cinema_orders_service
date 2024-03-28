@@ -32,17 +32,17 @@ func (c *ReserveCache) PingContext(ctx context.Context) error {
 	return nil
 }
 
-func getKeyForPlace(screeningId int64, row, seat int32) string {
-	return fmt.Sprintf("%d_%d_%d", screeningId, row, seat)
+func getKeyForPlace(screeningID int64, row, seat int32) string {
+	return fmt.Sprintf("%d_%d_%d", screeningID, row, seat)
 }
-func parseKeyForPlace(key string) (screeningId int64, row, seat int32, err error) {
+func parseKeyForPlace(key string) (screeningID int64, row, seat int32, err error) {
 	parts := strings.Split(key, "_")
 	if len(parts) != 3 {
 		err = errors.New("invalid key")
 		return
 	}
 
-	screeningId, err = strconv.ParseInt(parts[0], 10, 64)
+	screeningID, err = strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
 		return
 	}
@@ -64,28 +64,28 @@ func parseKeyForPlace(key string) (screeningId int64, row, seat int32, err error
 
 type reservation struct {
 	Places      []models.Place `json:"places"`
-	ScreeningId int64          `json:"screening_id"`
+	ScreeningID int64          `json:"screening_id"`
 }
 
 func (c *ReserveCache) ReservePlaces(ctx context.Context,
-	screeningId int64, places []models.Place, ttl time.Duration) (reservationId string, err error) {
+	screeningID int64, places []models.Place, ttl time.Duration) (reservationID string, err error) {
 	defer c.handleError(ctx, &err, "ReservePlaces")
 
 	tx := c.rdb.Pipeline()
-	toCache, err := json.Marshal(reservation{Places: places, ScreeningId: screeningId})
+	toCache, err := json.Marshal(reservation{Places: places, ScreeningID: screeningID})
 	if err != nil {
 		return
 	}
 
-	reservationId = uuid.NewString()
-	err = tx.Set(ctx, reservationId, toCache, ttl).Err()
+	reservationID = uuid.NewString()
+	err = tx.Set(ctx, reservationID, toCache, ttl).Err()
 	if err != nil {
 		return
 	}
 
 	var keys = make([]string, len(places))
 	for i, place := range places {
-		key := getKeyForPlace(screeningId, place.Row, place.Seat)
+		key := getKeyForPlace(screeningID, place.Row, place.Seat)
 		keys[i] = key
 
 		err = tx.Set(ctx, key, key, ttl).Err()
@@ -94,7 +94,7 @@ func (c *ReserveCache) ReservePlaces(ctx context.Context,
 		}
 	}
 
-	err = tx.SAdd(ctx, fmt.Sprint(screeningId), keys).Err()
+	err = tx.SAdd(ctx, fmt.Sprint(screeningID), keys).Err()
 	if err != nil {
 		return
 	}
@@ -108,10 +108,10 @@ func (c *ReserveCache) ReservePlaces(ctx context.Context,
 }
 
 func (c *ReserveCache) GetReservation(ctx context.Context,
-	reservationId string) (places []models.Place, screeningId int64, err error) {
+	reservationID string) (places []models.Place, screeningID int64, err error) {
 	defer c.handleError(ctx, &err, "GetReservation")
 
-	cached, err := c.rdb.Get(ctx, reservationId).Bytes()
+	cached, err := c.rdb.Get(ctx, reservationID).Bytes()
 	if err != nil {
 		return
 	}
@@ -122,13 +122,13 @@ func (c *ReserveCache) GetReservation(ctx context.Context,
 		return
 	}
 
-	return reserv.Places, reserv.ScreeningId, nil
+	return reserv.Places, reserv.ScreeningID, nil
 }
 
-func (c *ReserveCache) DeletePlacesReservation(ctx context.Context, reservationId string) (err error) {
+func (c *ReserveCache) DeletePlacesReservation(ctx context.Context, reservationID string) (err error) {
 	defer c.handleError(ctx, &err, "DeletePlacesReservation")
 
-	reservBody, err := c.rdb.Get(ctx, reservationId).Bytes()
+	reservBody, err := c.rdb.Get(ctx, reservationID).Bytes()
 	if err != nil {
 		return
 	}
@@ -141,16 +141,16 @@ func (c *ReserveCache) DeletePlacesReservation(ctx context.Context, reservationI
 
 	keys := make([]string, len(reserv.Places)+1)
 	for i := range reserv.Places {
-		keys[i] = getKeyForPlace(reserv.ScreeningId, reserv.Places[i].Row, reserv.Places[i].Seat)
+		keys[i] = getKeyForPlace(reserv.ScreeningID, reserv.Places[i].Row, reserv.Places[i].Seat)
 	}
-	keys[len(keys)-1] = reservationId
+	keys[len(keys)-1] = reservationID
 	tx := c.rdb.Pipeline()
 
 	err = tx.Del(ctx, keys...).Err()
 	if err != nil {
 		return
 	}
-	err = c.rdb.SRem(ctx, fmt.Sprint(reserv.ScreeningId), keys[:len(keys)-1]).Err()
+	err = c.rdb.SRem(ctx, fmt.Sprint(reserv.ScreeningID), keys[:len(keys)-1]).Err()
 	if err != nil {
 		return
 	}
@@ -159,7 +159,7 @@ func (c *ReserveCache) DeletePlacesReservation(ctx context.Context, reservationI
 }
 
 func (c *ReserveCache) removeNonexistantKeys(ctx context.Context,
-	screeningId int64, keys []string) (existsKeys []string, err error) {
+	screeningID int64, keys []string) (existsKeys []string, err error) {
 	defer c.handleError(ctx, &err, "removeNonexistantKeys")
 
 	if len(keys) == 0 {
@@ -191,7 +191,7 @@ func (c *ReserveCache) removeNonexistantKeys(ctx context.Context,
 		}
 	}
 
-	err = c.rdb.SRem(ctx, fmt.Sprint(screeningId), toRemove).Err()
+	err = c.rdb.SRem(ctx, fmt.Sprint(screeningID), toRemove).Err()
 	if err != nil {
 		return
 	}
@@ -200,10 +200,10 @@ func (c *ReserveCache) removeNonexistantKeys(ctx context.Context,
 	return
 }
 
-func (c *ReserveCache) GetReservedPlacesForScreening(ctx context.Context, screeningId int64) (places []models.Place, err error) {
+func (c *ReserveCache) GetReservedPlacesForScreening(ctx context.Context, screeningID int64) (places []models.Place, err error) {
 	defer c.handleError(ctx, &err, "GetReservedPlacesForScreening")
 
-	keys, err := c.rdb.SMembers(ctx, fmt.Sprint(screeningId)).Result()
+	keys, err := c.rdb.SMembers(ctx, fmt.Sprint(screeningID)).Result()
 	if err != nil {
 		return
 	}
@@ -211,7 +211,7 @@ func (c *ReserveCache) GetReservedPlacesForScreening(ctx context.Context, screen
 		return
 	}
 
-	keys, err = c.removeNonexistantKeys(ctx, screeningId, keys)
+	keys, err = c.removeNonexistantKeys(ctx, screeningID, keys)
 	if err != nil {
 		return
 	}
@@ -241,7 +241,7 @@ func (c *ReserveCache) GetScreeningsReservedPlaces(ctx context.Context,
 	return
 }
 
-func (с *ReserveCache) handleError(ctx context.Context, err *error, functionName string) {
+func (c *ReserveCache) handleError(ctx context.Context, err *error, functionName string) {
 	if ctx.Err() != nil {
 		var code models.ErrorCode
 		switch {
@@ -258,7 +258,7 @@ func (с *ReserveCache) handleError(ctx context.Context, err *error, functionNam
 		return
 	}
 
-	с.logError(*err, functionName)
+	c.logError(*err, functionName)
 	var repoErr = &models.ServiceError{}
 	if !errors.As(*err, &repoErr) {
 		var code models.ErrorCode
@@ -266,7 +266,7 @@ func (с *ReserveCache) handleError(ctx context.Context, err *error, functionNam
 		case errors.Is(*err, redis.Nil):
 			code = models.NotFound
 			*err = models.Error(code, "enity not found")
-		case err != nil:
+		default:
 			code = models.Internal
 			*err = models.Error(code, "cache internal error")
 		}
@@ -292,7 +292,6 @@ func (c *ReserveCache) logError(err error, functionName string) {
 			logrus.Fields{
 				"error.function.name": functionName,
 				"error.msg":           err.Error(),
-				"error.code":          models.Unknown,
 			},
 		).Error("reserve cache error occurred")
 	}

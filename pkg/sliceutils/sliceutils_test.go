@@ -85,17 +85,23 @@ func genRandomStringSlice(n int32) []string {
 func BenchmarkUniqueMergeSlices_String100(b *testing.B) {
 	s1 := genRandomStringSlice(50)
 	s2 := genRandomStringSlice(50)
+	b.StartTimer()
 	sliceutils.UniqueMergeSlices(s1, s2...)
+	b.StopTimer()
 }
 func BenchmarkUniqueMergeSlices_String1000(b *testing.B) {
 	s1 := genRandomStringSlice(500)
 	s2 := genRandomStringSlice(500)
+	b.StartTimer()
 	sliceutils.UniqueMergeSlices(s1, s2...)
+	b.StopTimer()
 }
 func BenchmarkUniqueMergeSlices_String10000(b *testing.B) {
 	s1 := genRandomStringSlice(5000)
 	s2 := genRandomStringSlice(5000)
+	b.StartTimer()
 	sliceutils.UniqueMergeSlices(s1, s2...)
+	b.StopTimer()
 }
 func TestUniqueMergeSlices_MyStruct(t *testing.T) {
 	type S struct {

@@ -7,4 +7,3 @@ Makefile
 *.md
 *.txt
 *.proto
-**/movies_db/

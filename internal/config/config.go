@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/Falokut/cinema_orders_service/pkg/jaeger"
+	"github.com/Falokut/cinema_orders_service/pkg/logging"
 	"github.com/Falokut/cinema_orders_service/pkg/metrics"
-	logging "github.com/Falokut/online_cinema_ticket_office.loggerwrapper"
 	"github.com/ilyakaznacheev/cleanenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -30,8 +30,8 @@ type Config struct {
 		ServerConfig metrics.MetricsServerConfig `yaml:"server_config"`
 	} `yaml:"prometheus"`
 
-	DbConnectionString string        `yaml:"db_connection_string" env:"DB_CONNECTION_STRING"`
-	DbName             string        `yaml:"db_name" env:"DB_NAME"`
+	DBConnectionString string        `yaml:"db_connection_string" env:"DB_CONNECTION_STRING"`
+	DBName             string        `yaml:"db_name" env:"DB_NAME"`
 	JaegerConfig       jaeger.Config `yaml:"jaeger"`
 	ReserveCache       struct {
 		Network  string `yaml:"network" env:"RESERVE_CACHE_NETWORK"`
@@ -86,7 +86,7 @@ type DialMethod = string
 
 const (
 	Insecure                 DialMethod = "INSECURE"
-	NilTlsConfig             DialMethod = "NIL_TLS_CONFIG"
+	NilTLSConfig             DialMethod = "NIL_TLS_CONFIG"
 	ClientWithSystemCertPool DialMethod = "CLIENT_WITH_SYSTEM_CERT_POOL"
 	Server                   DialMethod = "SERVER"
 )
@@ -104,7 +104,7 @@ func (c ConnectionSecureConfig) GetGrpcTransportCredentials() (grpc.DialOption, 
 		return grpc.WithTransportCredentials(insecure.NewCredentials()), nil
 	}
 
-	if c.Method == NilTlsConfig {
+	if c.Method == NilTLSConfig {
 		return grpc.WithTransportCredentials(credentials.NewTLS(nil)), nil
 	}
 

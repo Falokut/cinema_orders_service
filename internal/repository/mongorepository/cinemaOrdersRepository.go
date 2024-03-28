@@ -1,4 +1,4 @@
-package mongo_repository
+package mongorepository
 
 import (
 	"context"
@@ -42,19 +42,19 @@ const (
 	ticketType = "ticket"
 )
 
-func (r *CinemaOrdersRepository) GetOccupiedPlaces(ctx context.Context, screeningId int64) (places []models.Place, err error) {
+func (r *CinemaOrdersRepository) GetOccupiedPlaces(ctx context.Context, screeningID int64) (places []models.Place, err error) {
 	defer r.handleError(ctx, &err, "GetOccupiedPlaces")
 
 	collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
 	filter := bson.D{
-		{Key: "screening_id", Value: screeningId},
+		{Key: "screening_id", Value: screeningID},
 		{Key: "type", Value: ticketType},
 		{Key: "status",
 			Value: bson.D{
 				{Key: "$nin",
 					Value: bson.A{
-						models.ORDER_ITEM_STATUS_CANCELLED,
-						models.ORDER_ITEM_STATUS_REFUNDED,
+						models.OrderItemStatusCanceled,
+						models.OrderItemStatusRefunded,
 					},
 				},
 			},
@@ -80,13 +80,13 @@ func (r *CinemaOrdersRepository) GetOccupiedPlaces(ctx context.Context, screenin
 	return
 }
 
-func (r *CinemaOrdersRepository) ChangeOrderStatus(ctx context.Context, orderId string, newStatus models.OrderItemStatus) (err error) {
+func (r *CinemaOrdersRepository) ChangeOrderStatus(ctx context.Context, orderID string, newStatus models.OrderItemStatus) (err error) {
 	defer r.handleError(ctx, &err, "ChangeOrderStatus")
 
 	allowedPreviousStatuses := models.GetAllowedPreviousOrderStatuses(newStatus)
 	collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
 	_, err = collection.UpdateMany(ctx, bson.D{
-		{Key: "order_id", Value: orderId},
+		{Key: "order_id", Value: orderID},
 		{Key: "status",
 			Value: bson.D{
 				{Key: "$in", Value: allowedPreviousStatuses},
@@ -106,12 +106,12 @@ func (r *CinemaOrdersRepository) ChangeOrderStatus(ctx context.Context, orderId 
 }
 
 func (r *CinemaOrdersRepository) GetOrderItemsStatuses(ctx context.Context,
-	orderId string) (statuses []models.OrderItemStatus, err error) {
+	orderID string) (statuses []models.OrderItemStatus, err error) {
 	defer r.handleError(ctx, &err, "GetOrderItemsStatuses")
 
 	collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
 	pipe := bson.A{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "order_id", Value: orderId}}}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "order_id", Value: orderID}}}},
 		bson.D{
 			{
 				Key: "$group",
@@ -149,10 +149,10 @@ func (r *CinemaOrdersRepository) GetOrderItemsStatuses(ctx context.Context,
 	return
 }
 
-func (r *CinemaOrdersRepository) CancelOrder(ctx context.Context, orderId string) (err error) {
+func (r *CinemaOrdersRepository) CancelOrder(ctx context.Context, orderID string) (err error) {
 	defer r.handleError(ctx, &err, "CancelOrder")
 
-	allowedPreviousStatuses := models.GetAllowedPreviousOrderStatuses(models.ORDER_ITEM_STATUS_CANCELLED)
+	allowedPreviousStatuses := models.GetAllowedPreviousOrderStatuses(models.OrderItemStatusCanceled)
 
 	session, err := r.db.StartSession()
 	if err != nil {
@@ -166,13 +166,13 @@ func (r *CinemaOrdersRepository) CancelOrder(ctx context.Context, orderId string
 	err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) (err error) {
 		collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
 		filter := bson.D{
-			{Key: "order_id", Value: orderId},
+			{Key: "order_id", Value: orderID},
 			{Key: "status", Value: bson.E{Key: "$in", Value: allowedPreviousStatuses}},
 		}
 		_, err = collection.UpdateMany(ctx, filter,
 			bson.D{{Key: "$set",
 				Value: bson.D{
-					{Key: "status", Value: string(models.ORDER_ITEM_STATUS_CANCELLED)},
+					{Key: "status", Value: string(models.OrderItemStatusCanceled)},
 				},
 			},
 			})
@@ -184,12 +184,10 @@ func (r *CinemaOrdersRepository) CancelOrder(ctx context.Context, orderId string
 		}
 		return nil
 	})
-
 	return
-
 }
-func (r *CinemaOrdersRepository) ChangeOrderItemsStatus(ctx context.Context, orderId string,
-	itemsIds []string, newStatus models.OrderItemStatus) (err error) {
+func (r *CinemaOrdersRepository) ChangeOrderItemsStatus(ctx context.Context, orderID string,
+	itemsIDs []string, newStatus models.OrderItemStatus) (err error) {
 	defer r.handleError(ctx, &err, "ChangeOrderItemsStatus")
 	allowedPreviousStatuses := models.GetAllowedPreviousOrderStatuses(newStatus)
 
@@ -205,8 +203,8 @@ func (r *CinemaOrdersRepository) ChangeOrderItemsStatus(ctx context.Context, ord
 	err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) (err error) {
 		collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
 		filter := bson.D{
-			{Key: "order_id", Value: orderId},
-			{Key: "_id", Value: bson.E{Key: "$in", Value: itemsIds}},
+			{Key: "order_id", Value: orderID},
+			{Key: "_id", Value: bson.E{Key: "$in", Value: itemsIDs}},
 			{Key: "status", Value: bson.E{Key: "$in", Value: allowedPreviousStatuses}},
 		}
 		res, err := collection.UpdateMany(ctx, filter,
@@ -219,7 +217,7 @@ func (r *CinemaOrdersRepository) ChangeOrderItemsStatus(ctx context.Context, ord
 		if err != nil {
 			return
 		}
-		if res.ModifiedCount != int64(len(itemsIds)) {
+		if res.ModifiedCount != int64(len(itemsIDs)) {
 			return models.Error(models.NotFound, "error while changing order items status")
 		}
 		if err = sc.CommitTransaction(ctx); err != nil {
@@ -250,8 +248,8 @@ func (r *CinemaOrdersRepository) GetScreeningsOccupiedPlaces(ctx context.Context
 						Value: bson.D{
 							{Key: "$nin",
 								Value: bson.A{
-									models.ORDER_ITEM_STATUS_CANCELLED,
-									models.ORDER_ITEM_STATUS_REFUNDED,
+									models.OrderItemStatusCanceled,
+									models.OrderItemStatusRefunded,
 								},
 							},
 						},
@@ -276,7 +274,7 @@ func (r *CinemaOrdersRepository) GetScreeningsOccupiedPlaces(ctx context.Context
 	}
 
 	type screeningOccupiedPlaces struct {
-		ScreeningId int64          `bson:"_id"`
+		ScreeningID int64          `bson:"_id"`
 		Places      []models.Place `bson:"places"`
 	}
 	var places []screeningOccupiedPlaces
@@ -287,7 +285,7 @@ func (r *CinemaOrdersRepository) GetScreeningsOccupiedPlaces(ctx context.Context
 
 	res = make(map[int64][]models.Place, len(places))
 	for i := range places {
-		res[places[i].ScreeningId] = places[i].Places
+		res[places[i].ScreeningID] = places[i].Places
 	}
 
 	return res, nil
@@ -296,30 +294,30 @@ func (r *CinemaOrdersRepository) GetScreeningsOccupiedPlaces(ctx context.Context
 func (r *CinemaOrdersRepository) ProcessOrder(ctx context.Context, order models.ProcessOrderDTO) (err error) {
 	defer r.handleError(ctx, &err, "ProcessOrder")
 
-	tickets := make([]interface{}, len(order.Places))
+	tickets := make([]any, len(order.Places))
 	date := time.Now()
 	for i := range order.Places {
 		tickets[i] = struct {
-			TempId  string `bson:"_id"`
-			OrderId string `bson:"order_id"`
-			OwnerId string `bson:"owner_id"`
+			TempID  string `bson:"_id"`
+			OrderID string `bson:"order_id"`
+			OwnerID string `bson:"owner_id"`
 			// Always be ticket
 			Type        string       `bson:"type"`
 			Status      string       `bson:"status"`
 			Date        time.Time    `bson:"order_date"`
-			ScreeningId int64        `bson:"screening_id"`
+			ScreeningID int64        `bson:"screening_id"`
 			Place       models.Place `bson:"place"`
 			Price       uint32       `bson:"price"`
 		}{
-			TempId:      uuid.NewString(),
-			OrderId:     order.Id,
-			OwnerId:     order.OwnerId,
+			TempID:      uuid.NewString(),
+			OrderID:     order.ID,
+			OwnerID:     order.OwnerID,
 			Place:       order.Places[i].Place,
 			Price:       order.Places[i].Price,
-			ScreeningId: order.ScreeningId,
+			ScreeningID: order.ScreeningID,
 			Date:        date,
 			Type:        ticketType,
-			Status:      string(models.ORDER_ITEM_STATUS_PAYMENT_REQUIRED),
+			Status:      string(models.OrderItemStatusPaymentRequired),
 		}
 	}
 
@@ -339,16 +337,13 @@ func (r *CinemaOrdersRepository) ProcessOrder(ctx context.Context, order models.
 			return err
 		}
 
-		if err = sc.CommitTransaction(ctx); err != nil {
-			return err
-		}
-		return nil
+		return sc.CommitTransaction(ctx)
 	})
 
-	return err
+	return
 }
 
-func (r *CinemaOrdersRepository) GetOrders(ctx context.Context, accountId string,
+func (r *CinemaOrdersRepository) GetOrders(ctx context.Context, accountID string,
 	page, limit uint32, sort models.SortDTO) (orders []models.OrderPreview, err error) {
 	defer r.handleError(ctx, &err, "GetOrders")
 
@@ -362,7 +357,7 @@ func (r *CinemaOrdersRepository) GetOrders(ctx context.Context, accountId string
 		bson.D{
 			{Key: "$match",
 				Value: bson.D{
-					{Key: "owner_id", Value: accountId},
+					{Key: "owner_id", Value: accountID},
 				},
 			},
 		},
@@ -397,7 +392,7 @@ func (r *CinemaOrdersRepository) GetOrders(ctx context.Context, accountId string
 	return
 }
 
-func (r *CinemaOrdersRepository) GetOrderTotalPrice(ctx context.Context, orderId string) (price uint32, err error) {
+func (r *CinemaOrdersRepository) GetOrderTotalPrice(ctx context.Context, orderID string) (price uint32, err error) {
 	defer r.handleError(ctx, &err, "GetOrderTotalPrice")
 
 	collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
@@ -406,7 +401,7 @@ func (r *CinemaOrdersRepository) GetOrderTotalPrice(ctx context.Context, orderId
 		bson.D{
 			{Key: "$match",
 				Value: bson.D{
-					{Key: "order_id", Value: orderId},
+					{Key: "order_id", Value: orderID},
 				},
 			},
 		},
@@ -425,11 +420,11 @@ func (r *CinemaOrdersRepository) GetOrderTotalPrice(ctx context.Context, orderId
 		return
 	}
 	order := []struct {
-		Id         string `bson:"_id"`
+		ID         string `bson:"_id"`
 		TotalPrice uint32 `bson:"total_price"`
 	}{}
 
-	cur.All(ctx, &order)
+	err = cur.All(ctx, &order)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return
 	}
@@ -445,13 +440,13 @@ func (r *CinemaOrdersRepository) GetOrderTotalPrice(ctx context.Context, orderId
 }
 
 func (r *CinemaOrdersRepository) GetOrderItemsTotalPrice(ctx context.Context,
-	orderId string, itemsIds []string) (total uint32, err error) {
+	orderID string, itemsIDs []string) (total uint32, err error) {
 	defer r.handleError(ctx, &err, "GetOrderItemsTotalPrice")
 
 	collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
 
 	var filter = bson.D{
-		{Key: "order_id", Value: orderId},
+		{Key: "order_id", Value: orderID},
 	}
 
 	cur, err := collection.Find(ctx, filter, options.Find().SetProjection(bson.D{
@@ -464,7 +459,7 @@ func (r *CinemaOrdersRepository) GetOrderItemsTotalPrice(ctx context.Context,
 	}
 
 	type orderItem struct {
-		Id    string `bson:"_id"`
+		ID    string `bson:"_id"`
 		Price uint32 `bson:"price"`
 	}
 
@@ -474,7 +469,7 @@ func (r *CinemaOrdersRepository) GetOrderItemsTotalPrice(ctx context.Context,
 		return
 	}
 
-	if len(items) != len(itemsIds) {
+	if len(items) != len(itemsIDs) {
 		err = models.Error(models.NotFound, "items not found")
 		return
 	}
@@ -486,15 +481,15 @@ func (r *CinemaOrdersRepository) GetOrderItemsTotalPrice(ctx context.Context,
 	return
 }
 
-func (r *CinemaOrdersRepository) GetOrderScreeningId(ctx context.Context, accountId, orderId string) (id int64, err error) {
-	defer r.handleError(ctx, &err, "GetOrderScreeningId")
+func (r *CinemaOrdersRepository) GetOrderScreeningID(ctx context.Context, accountID, orderID string) (id int64, err error) {
+	defer r.handleError(ctx, &err, "GetOrderScreeningID")
 
 	pipe := bson.A{
 		bson.D{
 			{Key: "$match",
 				Value: bson.D{
-					{Key: "order_id", Value: orderId},
-					{Key: "owner_id", Value: accountId},
+					{Key: "order_id", Value: orderID},
+					{Key: "owner_id", Value: accountID},
 				},
 			},
 		},
@@ -510,31 +505,34 @@ func (r *CinemaOrdersRepository) GetOrderScreeningId(ctx context.Context, accoun
 
 	collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
 	cur, err := collection.Aggregate(ctx, pipe)
+	if err != nil {
+		return
+	}
 	order := []struct {
-		Id          string `bson:"_id"`
-		ScreeningId int64  `bson:"screening_id"`
+		ID          string `bson:"_id"`
+		ScreeningID int64  `bson:"screening_id"`
 	}{}
 
-	cur.All(ctx, &order)
+	err = cur.All(ctx, &order)
 	if err != nil {
 		return
 	}
 	if len(order) == 0 {
-		err = models.Error(models.NotFound, fmt.Sprintf("order with id %v not found", orderId))
+		err = models.Error(models.NotFound, fmt.Sprintf("order with id %v not found", orderID))
 		return
 	}
 
-	id = order[0].ScreeningId
+	id = order[0].ScreeningID
 	return
 }
 
-func (r *CinemaOrdersRepository) getOrderTickets(ctx context.Context, accountId string,
-	orderId string) (tickets []models.Ticket, err error) {
+func (r *CinemaOrdersRepository) getOrderTickets(ctx context.Context, accountID string,
+	orderID string) (tickets []models.Ticket, err error) {
 	defer r.handleError(ctx, &err, "getOrderTickets")
 
 	filter := bson.D{
-		{Key: "owner_id", Value: accountId},
-		{Key: "order_id", Value: orderId},
+		{Key: "owner_id", Value: accountID},
+		{Key: "order_id", Value: orderID},
 		{Key: "type", Value: ticketType},
 	}
 
@@ -550,13 +548,13 @@ func (r *CinemaOrdersRepository) getOrderTickets(ctx context.Context, accountId 
 	}
 
 	orderTickets := []struct {
-		Id     string       `bson:"_id"`
+		ID     string       `bson:"_id"`
 		Status string       `bson:"status"`
 		Place  models.Place `bson:"place"`
 		Price  uint32       `bson:"price"`
 	}{}
 
-	cur.All(ctx, &orderTickets)
+	err = cur.All(ctx, &orderTickets)
 	if err != nil {
 		return
 	}
@@ -570,7 +568,7 @@ func (r *CinemaOrdersRepository) getOrderTickets(ctx context.Context, accountId 
 			continue
 		}
 		tickets = append(tickets, models.Ticket{
-			Id:     orderTickets[i].Id,
+			ID:     orderTickets[i].ID,
 			Place:  orderTickets[i].Place,
 			Price:  orderTickets[i].Price,
 			Status: status,
@@ -578,16 +576,15 @@ func (r *CinemaOrdersRepository) getOrderTickets(ctx context.Context, accountId 
 	}
 
 	return
-
 }
 
 func (r *CinemaOrdersRepository) getOrderInfo(ctx context.Context,
-	orderId, accountId string) (orderDate time.Time, ScreeningId int64, err error) {
+	orderID, accountID string) (orderDate time.Time, screeningID int64, err error) {
 	defer r.handleError(ctx, &err, "getOrderInfo")
 
 	filter := bson.D{
-		{Key: "owner_id", Value: accountId},
-		{Key: "order_id", Value: orderId},
+		{Key: "owner_id", Value: accountID},
+		{Key: "order_id", Value: orderID},
 		{Key: "type", Value: ticketType},
 	}
 	collection := r.db.Database(r.databaseName).Collection(ordersCollectionName)
@@ -603,7 +600,7 @@ func (r *CinemaOrdersRepository) getOrderInfo(ctx context.Context,
 
 	type order struct {
 		Date        time.Time `bson:"order_date"`
-		ScreeningId int64     `bson:"screening_id"`
+		ScreeningID int64     `bson:"screening_id"`
 	}
 
 	ord := order{}
@@ -612,15 +609,15 @@ func (r *CinemaOrdersRepository) getOrderInfo(ctx context.Context,
 		return
 	}
 
-	return ord.Date, ord.ScreeningId, nil
+	return ord.Date, ord.ScreeningID, nil
 }
 
-func (r *CinemaOrdersRepository) GetOrder(ctx context.Context, orderId, accountId string) (res models.Order, err error) {
+func (r *CinemaOrdersRepository) GetOrder(ctx context.Context, orderID, accountID string) (res models.Order, err error) {
 	defer r.handleError(ctx, &err, "GetOrder")
-	r.logger.Info("order_id=", orderId, " account_id=", accountId)
+	r.logger.Info("order_id=", orderID, " account_id=", accountID)
 	type orderInfoResp struct {
 		orderDate   time.Time
-		ScreeningId int64
+		ScreeningID int64
 		err         error
 	}
 	var orderInfoCh = make(chan orderInfoResp, 1)
@@ -636,20 +633,20 @@ func (r *CinemaOrdersRepository) GetOrder(ctx context.Context, orderId, accountI
 	go func() {
 		defer close(orderTicketsCh)
 
-		res, err := r.getOrderTickets(ctx, accountId, orderId)
+		res, terr := r.getOrderTickets(ctx, accountID, orderID)
 		orderTicketsCh <- orderTicketsResp{
 			tickets: res,
-			err:     err,
+			err:     terr,
 		}
 	}()
 
 	go func() {
 		defer close(orderInfoCh)
-		date, screeningId, err := r.getOrderInfo(ctx, orderId, accountId)
+		date, screeningID, ierr := r.getOrderInfo(ctx, orderID, accountID)
 		orderInfoCh <- orderInfoResp{
 			orderDate:   date,
-			ScreeningId: screeningId,
-			err:         err,
+			ScreeningID: screeningID,
+			err:         ierr,
 		}
 	}()
 
@@ -667,8 +664,8 @@ func (r *CinemaOrdersRepository) GetOrder(ctx context.Context, orderId, accountI
 				return
 			}
 			res.Date = info.orderDate
-			res.Id = orderId
-			res.ScreeningId = info.ScreeningId
+			res.ID = orderID
+			res.ScreeningID = info.ScreeningID
 			infoReseived = true
 		case ticketsRes, ok := <-orderTicketsCh:
 			if !ok {
@@ -729,16 +726,12 @@ func (r *CinemaOrdersRepository) handleError(ctx context.Context, err *error, fu
 	r.logError(*err, functionName)
 	var repoErr = &models.ServiceError{}
 	if !errors.As(*err, &repoErr) {
-		var code models.ErrorCode
 		switch {
 		case errors.Is(*err, mongo.ErrNoDocuments):
-			code = models.NotFound
-			*err = models.Error(code, "")
+			*err = models.Error(models.NotFound, "")
 		case *err != nil:
-			code = models.Internal
-			*err = models.Error(code, "repository iternal error")
+			*err = models.Error(models.Internal, "repository iternal error")
 		}
-
 	}
 }
 

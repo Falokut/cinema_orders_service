@@ -45,7 +45,7 @@ func (e *ordersEvents) OrderCreated(ctx context.Context, email string, order mod
 	}
 	return e.eventsWriter.WriteMessages(ctx, kafka.Message{
 		Topic: orderCreatedTopic,
-		Key:   []byte(fmt.Sprint("order_", order.Id)),
+		Key:   []byte(fmt.Sprint("order_", order.ID)),
 		Value: body,
 	})
 }

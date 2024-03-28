@@ -22,19 +22,19 @@ import (
 
 type CinemaOrdersHandler struct {
 	cinema_orders_service.UnimplementedCinemaOrdersServiceV1Server
-	logger  *logrus.Logger
-	service service.CinemaOrdersService
+	logger *logrus.Logger
+	s      service.CinemaOrdersService
 }
 
-func NewCinemaOrdersHandler(logger *logrus.Logger, service service.CinemaOrdersService) *CinemaOrdersHandler {
-	return &CinemaOrdersHandler{logger: logger, service: service}
+func NewCinemaOrdersHandler(logger *logrus.Logger, s service.CinemaOrdersService) *CinemaOrdersHandler {
+	return &CinemaOrdersHandler{logger: logger, s: s}
 }
 
 func (h *CinemaOrdersHandler) GetOccupiedPlaces(ctx context.Context,
 	in *cinema_orders_service.GetOccupiedPlacesRequest) (res *cinema_orders_service.Places, err error) {
 	defer h.handleError(&err)
 
-	places, err := h.service.GetOccupiedPlaces(ctx, in.ScreeningId)
+	places, err := h.s.GetOccupiedPlaces(ctx, in.ScreeningID)
 	if err != nil {
 		return
 	}
@@ -53,33 +53,33 @@ func (h *CinemaOrdersHandler) ReservePlaces(ctx context.Context,
 		return
 	}
 
-	id, timeToPay, err := h.service.ReservePlaces(ctx,
-		in.ScreeningId, convertGrpcPlacesToModels(in.Places))
+	id, timeToPay, err := h.s.ReservePlaces(ctx,
+		in.ScreeningID, convertGrpcPlacesToModels(in.Places))
 	if err != nil {
 		return
 	}
 
 	timeToPayInMinutes := int32(math.Floor(timeToPay.Minutes()))
 	return &cinema_orders_service.ReservePlacesResponse{
-		ReserveId: id,
+		ReserveID: id,
 		TimeToPay: timeToPayInMinutes}, nil
 }
 
 const (
-	AccountIdContext = "X-Account-Id"
+	AccountIDContext = "X-Account-Id"
 )
 
 func (h *CinemaOrdersHandler) ProcessOrder(ctx context.Context,
 	in *cinema_orders_service.ProcessOrderRequest) (res *cinema_orders_service.ProcessOrderResponse, err error) {
 	defer h.handleError(&err)
 
-	accountId, ok := getAccountIdFromCtx(ctx)
+	accountID, ok := getAccountIDFromCtx(ctx)
 	if !ok {
 		err = status.Error(codes.Unauthenticated, "X-Account-Id header not specified")
 		return
 	}
 
-	url, err := h.service.ProcessOrder(ctx, in.ReserveId, accountId)
+	url, err := h.s.ProcessOrder(ctx, in.ReserveID, accountID)
 	if err != nil {
 		return
 	}
@@ -91,7 +91,7 @@ func (h *CinemaOrdersHandler) CancelReservation(ctx context.Context,
 	in *cinema_orders_service.CancelReservationRequest) (res *emptypb.Empty, err error) {
 	defer h.handleError(&err)
 
-	err = h.service.CancelReservation(ctx, in.ReserveId)
+	err = h.s.CancelReservation(ctx, in.ReserveID)
 	if err != nil {
 		return
 	}
@@ -102,16 +102,16 @@ func (h *CinemaOrdersHandler) CancelReservation(ctx context.Context,
 func (h *CinemaOrdersHandler) RefundOrder(ctx context.Context,
 	in *cinema_orders_service.RefundOrderRequest) (res *emptypb.Empty, err error) {
 	defer h.handleError(&err)
-	accountId, ok := getAccountIdFromCtx(ctx)
+	accountID, ok := getAccountIDFromCtx(ctx)
 	if !ok {
 		err = status.Error(codes.Unauthenticated, "X-Account-Id header not specified")
 		return
 	}
 
-	if len(in.ItemsIds) == 0 {
-		err = h.service.RefundOrder(ctx, accountId, in.OrderId)
+	if len(in.ItemsIDs) == 0 {
+		err = h.s.RefundOrder(ctx, accountID, in.OrderID)
 	} else {
-		err = h.service.RefundOrderItems(ctx, accountId, in.OrderId, in.ItemsIds)
+		err = h.s.RefundOrderItems(ctx, accountID, in.OrderID, in.ItemsIDs)
 	}
 
 	if err != nil {
@@ -126,13 +126,13 @@ func (h *CinemaOrdersHandler) GetOrder(ctx context.Context,
 	res *cinema_orders_service.Order, err error) {
 	defer h.handleError(&err)
 
-	accountId, ok := getAccountIdFromCtx(ctx)
+	accountID, ok := getAccountIDFromCtx(ctx)
 	if !ok {
 		err = status.Error(codes.Unauthenticated, "X-Account-Id header not specified")
 		return
 	}
 
-	order, err := h.service.GetOrder(ctx, in.OrderId, accountId)
+	order, err := h.s.GetOrder(ctx, in.OrderID, accountID)
 	if err != nil {
 		return
 	}
@@ -140,11 +140,11 @@ func (h *CinemaOrdersHandler) GetOrder(ctx context.Context,
 	res = &cinema_orders_service.Order{
 		OrderDate:   &cinema_orders_service.Timestamp{FormattedTimestamp: order.Date.Format(time.RFC3339)},
 		Tickets:     make([]*cinema_orders_service.Ticket, 0, len(order.Tickets)),
-		ScreeningId: order.ScreeningId,
+		ScreeningID: order.ScreeningID,
 	}
 	for i := range order.Tickets {
 		res.Tickets = append(res.Tickets, &cinema_orders_service.Ticket{
-			TicketId: order.Tickets[i].Id,
+			TicketID: order.Tickets[i].ID,
 			Place: &cinema_orders_service.Place{
 				Row:  order.Tickets[i].Place.Row,
 				Seat: order.Tickets[i].Place.Seat,
@@ -162,15 +162,15 @@ func (h *CinemaOrdersHandler) GetScreeningsOccupiedPlacesCounts(ctx context.Cont
 	res *cinema_orders_service.ScreeningsOccupiedPlacesCount, err error) {
 	defer h.handleError(&err)
 
-	in.ScreeningsIds = strings.TrimSpace(strings.ReplaceAll(in.ScreeningsIds, `"`, ""))
-	if ok := checkIds(in.ScreeningsIds); !ok {
+	in.ScreeningsIDs = strings.TrimSpace(strings.ReplaceAll(in.ScreeningsIDs, `"`, ""))
+	if ok := checkIds(in.ScreeningsIDs); !ok {
 		err = status.Error(codes.InvalidArgument,
 			"screenings_ids mustn't be empty and screenings_ids ids must contains only digits and commas")
 		return
 	}
 
-	ids := convertStringToInt64Slice(strings.Split(in.ScreeningsIds, ","))
-	places, err := h.service.GetScreeningsOccupiedPlacesCounts(ctx, ids)
+	ids := convertStringToInt64Slice(strings.Split(in.ScreeningsIDs, ","))
+	places, err := h.s.GetScreeningsOccupiedPlacesCounts(ctx, ids)
 	if err != nil {
 		return
 	}
@@ -185,7 +185,7 @@ func (h *CinemaOrdersHandler) GetOrders(ctx context.Context,
 	in *cinema_orders_service.GetOrdersRequest) (res *cinema_orders_service.OrdersPreviews, err error) {
 	defer h.handleError(&err)
 
-	accountId, ok := getAccountIdFromCtx(ctx)
+	accountID, ok := getAccountIDFromCtx(ctx)
 	if !ok {
 		err = status.Error(codes.Unauthenticated, "X-Account-Id header not specified")
 		return
@@ -202,8 +202,8 @@ func (h *CinemaOrdersHandler) GetOrders(ctx context.Context,
 		return
 	}
 
-	preview, err := h.service.GetOrders(ctx,
-		accountId, in.Page, in.Limit, getOrdersPreviewSort(in.Sort))
+	preview, err := h.s.GetOrders(ctx,
+		accountID, in.Page, in.Limit, getOrdersPreviewSort(in.Sort))
 	if err != nil {
 		return
 	}
@@ -246,20 +246,20 @@ func convertStringToInt64Slice(str []string) []int64 {
 }
 
 func checkIds(val string) bool {
-	return regexp.MustCompile("^[!-&!,0-9]+$").Match([]byte(val))
+	return regexp.MustCompile(`^\d+(,\d+)*$`).MatchString(val)
 }
 
-func getAccountIdFromCtx(ctx context.Context) (string, bool) {
+func getAccountIDFromCtx(ctx context.Context) (string, bool) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", false
 	}
-	accountId := md.Get(AccountIdContext)
-	if len(accountId) == 0 {
+	accountID := md.Get(AccountIDContext)
+	if len(accountID) == 0 {
 		return "", false
 	}
 
-	return accountId[0], true
+	return accountID[0], true
 }
 
 func convertServiceErrCodeToGrpc(code models.ErrorCode) codes.Code {
@@ -329,29 +329,29 @@ func convertModelsOrdersPreviewsToGrpc(pr []models.OrderPreview) []*cinema_order
 	var res = make([]*cinema_orders_service.OrderPreview, len(pr))
 	for i := range pr {
 		res[i] = &cinema_orders_service.OrderPreview{
-			OrderId:     pr[i].OrderId,
+			OrderID:     pr[i].OrderID,
 			OrderDate:   &cinema_orders_service.Timestamp{FormattedTimestamp: pr[i].OrderDate.Format(time.RFC3339)},
 			TotalPrice:  &cinema_orders_service.Price{Value: int32(pr[i].TotalPrice)},
-			ScreeningId: pr[i].ScreeningId,
+			ScreeningID: pr[i].ScreeningID,
 		}
 	}
 	return res
 }
 
-func OrderStatusFromModels(st models.OrderItemStatus) (status cinema_orders_service.Status) {
+func OrderStatusFromModels(st models.OrderItemStatus) (res cinema_orders_service.Status) {
 	switch st {
-	case models.ORDER_ITEM_STATUS_PAID:
-		status = cinema_orders_service.Status_PAID
-	case models.ORDER_ITEM_STATUS_PAYMENT_REQUIRED:
-		status = cinema_orders_service.Status_PAYMENT_REQUIRED
-	case models.ORDER_ITEM_STATUS_REFUND_AWAITING:
-		status = cinema_orders_service.Status_REFUND_AWAITING
-	case models.ORDER_ITEM_STATUS_CANCELLED:
-		status = cinema_orders_service.Status_CANCELLED
-	case models.ORDER_ITEM_STATUS_USED:
-		status = cinema_orders_service.Status_USED
-	case models.ORDER_ITEM_STATUS_REFUNDED:
-		status = cinema_orders_service.Status_REFUNDED
+	case models.OrderItemStatusPaid:
+		res = cinema_orders_service.Status_PAID
+	case models.OrderItemStatusPaymentRequired:
+		res = cinema_orders_service.Status_PAYMENT_REQUIRED
+	case models.OrderItemStatusRefundAwaiting:
+		res = cinema_orders_service.Status_REFUND_AWAITING
+	case models.OrderItemStatusCanceled:
+		res = cinema_orders_service.Status_CANCELED
+	case models.OrderItemStatusUsed:
+		res = cinema_orders_service.Status_USED
+	case models.OrderItemStatusRefunded:
+		res = cinema_orders_service.Status_REFUNDED
 	}
 	return
 }

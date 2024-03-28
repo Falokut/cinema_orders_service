@@ -29,6 +29,51 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func initHealthcheck(cfg *config.Config, shutdown chan error, resources []healthcheck.HealthcheckResource) {
+	logger := logging.GetLogger()
+	logger.Info("Healthcheck initializing")
+	healthcheckManager := healthcheck.NewHealthManager(logger.Logger,
+		resources, cfg.HealthcheckPort, nil)
+	go func() {
+		logger.Info("Healthcheck server running")
+		if err := healthcheckManager.RunHealthcheckEndpoint(); err != nil {
+			logger.Errorf("Shutting down, can't run healthcheck endpoint %v", err)
+			shutdown <- err
+		}
+	}()
+}
+
+func initMetrics(cfg *config.Config, shutdown chan error) (metrics.Metrics, error) {
+	logger := logging.GetLogger()
+
+	tracer, closer, err := jaegerTracer.InitJaeger(cfg.JaegerConfig)
+	if err != nil {
+		logger.Errorf("Shutting down, error while creating tracer %v", err)
+		return nil, err
+	}
+
+	logger.Info("Jaeger connected")
+	defer closer.Close()
+	opentracing.SetGlobalTracer(tracer)
+
+	logger.Info("Metrics initializing")
+	metric, err := metrics.CreateMetrics(cfg.PrometheusConfig.Name)
+	if err != nil {
+		logger.Errorf("Shutting down, error while creating metrics %v", err)
+		return nil, err
+	}
+
+	go func() {
+		logger.Info("Metrics server running")
+		if err := metrics.RunMetricServer(cfg.PrometheusConfig.ServerConfig); err != nil {
+			logger.Errorf("Shutting down, error while running metrics server %v", err)
+			shutdown <- err
+		}
+	}()
+
+	return metric, nil
+}
+
 func main() {
 	logging.NewEntry(logging.ConsoleOutput)
 	logger := logging.GetLogger()
@@ -40,40 +85,26 @@ func main() {
 	}
 	logger.Logger.SetLevel(logLevel)
 
-	tracer, closer, err := jaegerTracer.InitJaeger(cfg.JaegerConfig)
-	if err != nil {
-		logger.Errorf("Shutting down, error while creating tracer %v", err)
-		return
-	}
-	logger.Info("Jaeger connected")
-	defer closer.Close()
-	opentracing.SetGlobalTracer(tracer)
-
-	logger.Info("Metrics initializing")
-	metric, err := metrics.CreateMetrics(cfg.PrometheusConfig.Name)
-	if err != nil {
-		logger.Errorf("Shutting down, error while creating metrics %v", err)
-		return
-	}
-
 	shutdown := make(chan error, 1)
-	go func() {
-		logger.Info("Metrics server running")
-		if err := metrics.RunMetricServer(cfg.PrometheusConfig.ServerConfig); err != nil {
-			logger.Errorf("Shutting down, error while running metrics server %v", err)
-			shutdown <- err
-			return
-		}
-	}()
-
-	cinemaOrdersDB, err := mongo_repository.NewMongoDB(cfg.DbConnectionString)
+	metric, err := initMetrics(cfg, shutdown)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	cinemaOrdersDB, err := mongo_repository.NewMongoDB(cfg.DBConnectionString)
 	if err != nil {
 		logger.Errorf("Shutting down, connection to the database not established %v", err)
 		return
 	}
-	defer cinemaOrdersDB.Disconnect(context.Background())
+	defer func() {
+		derr := cinemaOrdersDB.Disconnect(context.Background())
+		if derr != nil {
+			logger.Errorf("Error while closing connection %v", derr)
+			return
+		}
+	}()
 	cinemaRepo := mongo_repository.NewCinemaOrdersRepository(
-		logger.Logger, cinemaOrdersDB, cfg.DbName)
+		logger.Logger, cinemaOrdersDB, cfg.DBName)
 
 	reserveRdb, err := rediscache.NewRedisCache(&redis.Options{
 		Network:  cfg.ReserveCache.Network,
@@ -87,16 +118,8 @@ func main() {
 	}
 	defer reserveRdb.Shutdown(context.Background())
 	reserveCache := rediscache.NewReserveCache(reserveRdb, logger.Logger)
-	go func() {
-		logger.Info("Healthcheck initializing")
-		healthcheckManager := healthcheck.NewHealthManager(logger.Logger,
-			[]healthcheck.HealthcheckResource{cinemaRepo, reserveCache}, cfg.HealthcheckPort, nil)
-		if err := healthcheckManager.RunHealthcheckEndpoint(); err != nil {
-			logger.Errorf("Shutting down, error while running healthcheck endpoint %s", err.Error())
-			shutdown <- err
-			return
-		}
-	}()
+
+	initHealthcheck(cfg, shutdown, []healthcheck.HealthcheckResource{reserveCache, cinemaRepo})
 
 	cinemaService, err := cinema_service.NewCinemaService(
 		cfg.CinemaServiceConfig.Addr,
@@ -127,7 +150,7 @@ func main() {
 		logger.Logger,
 	)
 
-	service := service.NewCinemaOrdersService(logger.Logger,
+	s := service.NewCinemaOrdersService(logger.Logger,
 		cinemaRepo,
 		reserveCache,
 		cfg.SeatReservationTime,
@@ -137,11 +160,11 @@ func main() {
 		ordersEvents,
 	)
 
-	handler := handler.NewCinemaOrdersHandler(logger.Logger, service)
+	h := handler.NewCinemaOrdersHandler(logger.Logger, s)
 	logger.Info("Server initializing")
-	s := server.NewServer(logger.Logger, handler)
+	serv := server.NewServer(logger.Logger, h)
 	go func() {
-		if err := s.Run(getListenServerConfig(cfg), metric, nil, nil); err != nil {
+		if err := serv.Run(getListenServerConfig(cfg), metric, nil, nil); err != nil {
 			logger.Errorf("Shutting down, error while running server %s", err.Error())
 			shutdown <- err
 			return
@@ -158,7 +181,7 @@ func main() {
 		break
 	}
 
-	s.Shutdown()
+	serv.Shutdown()
 }
 
 func getListenServerConfig(cfg *config.Config) server.Config {
@@ -174,7 +197,7 @@ func getListenServerConfig(cfg *config.Config) server.Config {
 				return errors.New("can't convert")
 			}
 
-			return cinema_orders_service.RegisterCinemaOrdersServiceV1HandlerServer(context.Background(),
+			return cinema_orders_service.RegisterCinemaOrdersServiceV1HandlerServer(ctx,
 				mux, serv)
 		},
 	}
